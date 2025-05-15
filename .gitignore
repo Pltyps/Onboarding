@@ -1,0 +1,19 @@
+# Build artifacts
+bin/
+obj/
+
+# Visual Studio
+.vscode/
+*.user
+*.suo
+
+# SQLite DB (optional to ignore)
+*.db
+
+# Secrets (in case you add user-secrets)
+secrets.json
+
+# .NET tooling
+*.DS_Store
+*.log
+.env
