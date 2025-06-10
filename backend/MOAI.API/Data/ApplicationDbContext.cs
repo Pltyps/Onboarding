@@ -19,5 +19,4 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<StoredDocument> Documents => Set<StoredDocument>();
     public DbSet<AppUser> Users => Set<AppUser>();
-
 }

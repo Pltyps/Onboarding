@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using MOAI.API.Models;
 using MOAI.API.Data;
-using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
 
 namespace MOAI.API.Controllers;
 
@@ -11,17 +14,62 @@ namespace MOAI.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IConfiguration _config;
 
-    public AuthController(ApplicationDbContext db) => _db = db;
+    public AuthController(ApplicationDbContext db, IConfiguration config)
+    {
+        _db = db;
+        _config = config;
+    }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromForm] string email, [FromForm] string password)
+    public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email);
+
+        if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized("Invalid credentials");
 
-        // 🔧 You may add JWT here later; for now return role info for frontend testing
-        return Ok(new { user.Email, user.Role });
+        // Set cookie manually
+        HttpContext.Response.Cookies.Append("user_email", user.Email, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+        HttpContext.Response.Cookies.Append("user_role", user.Role, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+        HttpContext.Response.Cookies.Append("user_department", user.Department, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+
+        return Ok(new
+        {
+            message = "Logged in",
+            email = user.Email,
+            role = user.Role,
+            department = user.Department
+        });
+
     }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("user_email");
+        Response.Cookies.Delete("user_role");
+        Response.Cookies.Delete("user_department");
+        return Ok(new { message = "Logged out" });
+    }
+
 }

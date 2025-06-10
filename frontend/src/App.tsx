@@ -1,35 +1,115 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Route, Routes, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Documents from './pages/Documents';
+import DocumentView from './pages/DocumentView';
+import UploadForm from './pages/UploadForm';
+import Chat from './pages/Chat.tsx'; // Optional: scaffold a placeholder if not yet created
+import AdminStats from './pages/AdminStats.tsx'; // Optional: same here
+import Layout from './components/Layout';
+import { useAuth } from './context/AuthContext';
 
-function App() {
-  const [count, setCount] = useState(0)
+// 🔐 Wrapper: Blocks route if not logged in
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn } = useAuth();
+  return isLoggedIn ? <>{children}</> : <Navigate to="/login" />;
+};
 
+// 🔐 Wrapper: Admin-only
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, user } = useAuth();
+  return isLoggedIn && user?.role === 'Admin' ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/login" />
+  );
+};
+
+// 🔐 Wrapper: Admins and Full-Time Staff
+const StaffRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, user } = useAuth();
+  const allowed = user?.role === 'Admin' || user?.role === 'FullTime';
+  return isLoggedIn && allowed ? <>{children}</> : <Navigate to="/login" />;
+};
+
+const App: React.FC = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Routes>
+      {/* 🔓 Public Login route */}
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<Login />} />
 
-export default App
+      {/* 🧠 Dashboard (all roles) */}
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* 📁 Document list and viewer */}
+      <Route
+        path="/documents"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Documents />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/documents/:fileName"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <DocumentView />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* 📤 Upload: Admin or Full-Time */}
+      <Route
+        path="/upload"
+        element={
+          <StaffRoute>
+            <Layout>
+              <UploadForm />
+            </Layout>
+          </StaffRoute>
+        }
+      />
+
+      {/* 💬 Chat: All roles */}
+      <Route
+        path="/chat"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Chat />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* 📊 Admin Stats: Admin-only */}
+      <Route
+        path="/admin-stats"
+        element={
+          <AdminRoute>
+            <Layout>
+              <AdminStats />
+            </Layout>
+          </AdminRoute>
+        }
+      />
+    </Routes>
+  );
+};
+
+export default App;

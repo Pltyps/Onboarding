@@ -1,6 +1,8 @@
-﻿using MOAI.API.Data;
-using MOAI.API.Models;
+﻿using System;
 using Microsoft.EntityFrameworkCore;
+using MOAI.API.Data;
+using MOAI.API.Models;
+using Microsoft.AspNetCore.Hosting;
 
 namespace MOAI.API.Services;
 
@@ -8,11 +10,14 @@ namespace MOAI.API.Services;
 public class DocumentService : IDocumentService
 {
     private readonly ApplicationDbContext _db;
+    private readonly IWebHostEnvironment _env;
 
-    public DocumentService(ApplicationDbContext db)
+    public DocumentService(ApplicationDbContext db, IWebHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
+
 
     // Check if a document with the same filename already exists
     public async Task<(bool IsDuplicate, string ExistingContent)> CheckForDuplicateAsync(string fileName)
@@ -24,10 +29,10 @@ public class DocumentService : IDocumentService
     // Extracts safe plaintext from the uploaded file
     public async Task<string> ExtractSafeTextAsync(IFormFile file)
     {
-        // 🔧 Supports only .txt and .md for now; extend this if you add support for .docx with conversion
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (extension != ".txt" && extension != ".md")
-            throw new InvalidOperationException("Unsupported file type. Only .txt and .md are allowed.");
+
+        if (extension != ".txt" && extension != ".md" && extension != ".docx")
+            throw new InvalidOperationException("Unsupported file type. Only .txt, .md, and .docx are allowed.");
 
         using var reader = new StreamReader(file.OpenReadStream());
         return await reader.ReadToEndAsync();
@@ -36,25 +41,32 @@ public class DocumentService : IDocumentService
     // Saves or overwrites an existing file with new content
     public async Task SaveFileAsync(string fileName, string department, string content, string uploadedBy)
     {
-        // Remove any existing version of the file (based on filename match)
         var existing = await _db.Documents.FirstOrDefaultAsync(d => d.FileName == fileName);
+
         if (existing != null)
         {
-            _db.Documents.Remove(existing);
+            existing.Content = content;
+            existing.Department = department;
+            existing.UploadedBy = uploadedBy;
+            existing.UploadedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            var newDoc = new StoredDocument
+            {
+                FileName = fileName,
+                Department = department,
+                Content = content,
+                UploadedBy = uploadedBy,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _db.Documents.Add(newDoc);
         }
 
-        var newDoc = new StoredDocument
-        {
-            FileName = fileName,
-            Department = department,
-            Content = content,
-            UploadedBy = uploadedBy,
-            UploadedAt = DateTime.UtcNow
-        };
-
-        _db.Documents.Add(newDoc);
         await _db.SaveChangesAsync();
     }
+
 
     public async Task<List<StoredDocument>> GetAllAsync()
     {
@@ -64,6 +76,28 @@ public class DocumentService : IDocumentService
     public async Task<StoredDocument?> GetByFileNameAsync(string fileName)
     {
         return await _db.Documents.FirstOrDefaultAsync(d => d.FileName == fileName);
+    }
+
+    public async Task<bool> DeleteFileAsync(string fileName)
+    {
+        try
+        {
+            if (Path.GetFileName(fileName) != fileName) // stronger path sanitization
+                return false;
+
+            var doc = await _db.Documents.FirstOrDefaultAsync(d => d.FileName == fileName);
+            if (doc == null)
+                return false;
+
+            _db.Documents.Remove(doc);
+            await _db.SaveChangesAsync();
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
 }

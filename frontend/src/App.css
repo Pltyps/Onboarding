@@ -1,42 +1,293 @@
+/* =======================
+   BYU Marriott Theme + Layout
+   ======================= */
+
+/* Brand Colors */
+:root {
+  --byu-blue: #002e5d;
+  --byu-light: #eeeef1;
+  --byu-dark: #202020;
+  --byu-text-light: #000000;
+  --byu-text-dark: #ffffff;
+  --byu-gray: #a2adb1;
+  --byu-white: #ffffff;
+  --byu-royal: #003da5;
+}
+
+/* Layout Resets */
+html,
+body,
 #root {
-  max-width: 1280px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: var(--byu-light);
+  color: var(--byu-text-light);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
+}
+
+/* =======================
+   Dark Mode Styling
+   ======================= */
+body[data-theme='dark'] {
+  background-color: var(--byu-dark);
+  color: var(--byu-text-dark);
+}
+
+body[data-theme='light'] .bg-body {
+  background-color: var(--byu-light) !important;
+  color: var(--byu-text-light) !important;
+}
+
+body[data-theme='dark'] .bg-body {
+  background-color: var(--byu-dark) !important;
+  color: var(--byu-text-dark) !important;
+}
+
+body[data-theme='light'] .theme-bg {
+  background-color: var(--byu-white) !important;
+  color: var(--byu-text-light) !important;
+}
+
+body[data-theme='dark'] .theme-bg {
+  background-color: #121212 !important;
+  color: var(--byu-text-dark) !important;
+}
+
+body[data-theme='light'] .theme-header {
+  background-color: var(--byu-light) !important;
+  color: var(--byu-text-light) !important;
+}
+
+body[data-theme='dark'] .theme-header {
+  background-color: #2b2b2b !important;
+  color: var(--byu-text-dark) !important;
+}
+
+/* =======================
+   Navbar
+   ======================= */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 1rem 1.5rem;
+}
+
+/* =======================
+   Buttons
+   ======================= */
+.btn-primary {
+  background-color: var(--byu-blue) !important;
+  border-color: var(--byu-blue) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: #004080 !important;
+}
+
+body[data-theme='dark'] .btn {
+  background-color: #444;
+  color: #fff;
+}
+
+body[data-theme='dark'] .btn-outline-secondary {
+  border-color: #ccc;
+  color: #ccc;
+}
+
+body[data-theme='dark'] .btn-outline-secondary:hover {
+  background-color: #666;
+  color: #fff;
+}
+
+/* =======================
+   Dashboard Tile Cards
+   ======================= */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.disabled-tile {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dashboard-tile {
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: var(--byu-white);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid #dee2e6;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dashboard-tile:hover,
+.dashboard-tile:focus {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  border-color: var(--byu-blue);
+}
+
+.dashboard-tile.active {
+  border-color: #004080;
+  box-shadow: 0 0 0 2px #00408033;
+}
+
+body[data-theme='dark'] .dashboard-tile {
+  background-color: #2b2b2b;
+  color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* =======================
+   Typography
+   ======================= */
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--byu-blue);
+  margin-bottom: 0.75rem;
+}
+
+h1 {
+  font-size: 2rem;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+p,
+li {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+small,
+label {
+  font-size: 0.875rem;
+  color: var(--byu-gray);
+}
+
+/* =======================
+   Containers + Footer
+   ======================= */
+.container {
+  max-width: 960px;
+  padding: 1rem;
   margin: 0 auto;
-  padding: 2rem;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+  padding: 1rem;
   text-align: center;
+  background-color: #e9ecef;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body[data-theme='dark'] footer {
+  background-color: #2b2b2b;
+  color: #ccc;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* =======================
+   Utility + Overrides
+   ======================= */
+a {
+  color: var(--byu-blue);
+  text-decoration: none;
+}
+a:hover {
+  color: #004080;
+  text-decoration: underline;
+}
+
+pre {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #f1f1f1;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+body[data-theme='dark'] pre {
+  background-color: #2b2b2b;
+  color: #e0e0e0;
+}
+
+.diff-added {
+  background-color: #e6ffed !important;
+}
+.diff-removed {
+  background-color: #ffeef0 !important;
+}
+
+:focus {
+  outline: 2px dashed var(--byu-blue);
+  outline-offset: 3px;
+}
+
+/* =======================
+   Mobile Optimizations
+   ======================= */
+@media (max-width: 576px) {
+  .dashboard-tile {
+    padding: 1rem;
+    font-size: 0.95rem;
   }
-  to {
-    transform: rotate(360deg);
+
+  h1,
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+
+  .tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  input,
+  select {
+    font-size: 0.95rem !important;
+    padding: 0.6rem 0.9rem !important;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@media (max-width: 480px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
-}
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  footer {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+  }
 }

@@ -26,5 +26,7 @@ public interface IDocumentService
 
     Task<List<StoredDocument>> GetAllAsync();
     Task<StoredDocument?> GetByFileNameAsync(string fileName);
+    Task<bool> DeleteFileAsync(string fileName);
+
 
 }

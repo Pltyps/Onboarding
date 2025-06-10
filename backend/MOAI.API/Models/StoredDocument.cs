@@ -34,6 +34,4 @@ public class StoredDocument
     /// Timestamp (UTC) of when the file was uploaded or replaced.
     /// </summary>
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
-    public bool Approved { get; set; } = true; // Default to true unless review is added
-
 }

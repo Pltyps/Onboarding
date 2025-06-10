@@ -19,4 +19,10 @@ public class AppUser
     /// 🔧 Expandable to Editor, Reviewer, etc.
     /// </summary>
     public string Role { get; set; } = "Viewer"; // 🔧 Valid values: "Admin", "Viewer"
+
+    /// <summary>
+    /// Department this user belongs to (e.g., Accounting, HR).
+    /// </summary>
+    public string Department { get; set; } = "Unknown";
+
 }
