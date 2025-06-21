@@ -1,79 +1,75 @@
 ﻿using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication;
 using MOAI.API.Data;
 using MOAI.API.Models;
 using MOAI.API.Services;
+using DotNetEnv;
+using MOAI.API.Utils;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    WebRootPath = "wwwroot"
+});
 
 
-// -------------------------------------
-// ✅ Add core services
-// -------------------------------------
+// ── Load .env variables into Environment ──
+Env.Load();
+builder.Configuration.AddEnvironmentVariables();
+
+
+// ── Core services ──
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ── SQLite DB ──
+builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+    opts.UseSqlite(builder.Configuration.GetConnectionString("StorageConnection")));
 
+// ── CORS ──
+builder.Services.AddCors(o => o.AddPolicy("AllowFrontend", p =>
+    p.WithOrigins("http://localhost:3000")
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+     .AllowCredentials()));
 
-// -------------------------------------
-// ✅ Database setup (SQLite for now)
-// -------------------------------------
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("StorageConnection")));
+// ── Dummy auth ──
+// Register the default TimeProvider in DI
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services
+    .AddAuthentication("CookieAuth")
+    .AddScheme<AuthenticationSchemeOptions, DummyAuthHandler>("CookieAuth", _ => { });
 
-// -------------------------------------
-// ✅ CORS configuration for frontend (dev only)
-// -------------------------------------
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowCredentials()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-
-// -------------------------------------
-// ✅ Dependency injection
-// -------------------------------------
+// ── Document + AI services ──
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
+builder.Services.AddScoped<IDocumentIndexService, DocumentIndexService>();
 
-// -------------------------------------
-// ✅ Authentication setup
-// -------------------------------------
-builder.Services.AddAuthentication("CookieAuth").AddScheme<AuthenticationSchemeOptions, DummyAuthHandler>("CookieAuth", options => { });
+builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<PdfConverterService>();
 
-// -------------------------------------
-// ✅ Set custom dev port
-// -------------------------------------
-builder.WebHost.UseUrls("https://localhost:5000");
+builder.Services.AddScoped<PdfTextExtractorService>();
+
+builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<OpenAiClientService>();
+
+builder.Services.AddScoped<PolicyLoaderService>();
+
+builder.Services.AddScoped<IChatService, ChatService>();
 
 var app = builder.Build();
 
-// -------------------------------------
-// ✅ Enable Swagger only in dev
-// -------------------------------------
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// -------------------------------------
-// ✅ Auto-seed admin + users
-// -------------------------------------
+// ── Build index and seed users ──
 using (var scope = app.Services.CreateScope())
 {
+    var indexer = scope.ServiceProvider.GetRequiredService<IDocumentIndexService>();
+    await indexer.InitializeAsync();
+
+    // ✅ Seed admin + users
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.EnsureCreated();
 
@@ -114,37 +110,65 @@ using (var scope = app.Services.CreateScope())
     db.SaveChanges();
 }
 
-// -------------------------------------
-// ✅ Middleware pipeline
-// -------------------------------------
+
+
+// ── Middleware ──
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage(); // 👈 shows full error
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"error\":\"Unexpected server error.\"}");
+        });
+    });
+}
+
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
-app.UseRouting();
 
-app.Use(async (context, next) =>
+app.UseExceptionHandler(errorApp =>
 {
-    var email = context.Request.Cookies["user_email"];
-    var role = context.Request.Cookies["user_role"];
-    var dept = context.Request.Cookies["user_department"];
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"error\":\"Unexpected server error.\"}");
+    });
+});
+
+
+app.Use(async (ctx, next) =>
+{
+    var email = ctx.Request.Cookies["user_email"];
+    var role = ctx.Request.Cookies["user_role"];
+    var dept = ctx.Request.Cookies["user_department"];
 
     if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(role))
     {
-        var claims = new List<Claim>
+        ActiveUserTracker.Track(email);
+        ctx.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, role),
-            new Claim("Department", dept ?? "Unknown")
-        };
-
-        var identity = new ClaimsIdentity(claims, "CookieAuth");
-        context.User = new ClaimsPrincipal(identity);
+            new Claim("Department", dept ?? "")
+        }, "CookieAuth"));
     }
 
     await next();
 });
 
+app.MapGet("/health", () => Results.Ok("Healthy"));
+
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();

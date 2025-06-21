@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import DiffViewer from '../components/DiffViewer';
-
-interface UploadResponse {
-  duplicate: boolean;
-  existingContent?: string;
-  uploadedContent?: string;
-  fileName?: string;
-}
+import { getDocumentByName, apiClient } from '../services/api';
 
 const UploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -16,37 +9,68 @@ const UploadForm = () => {
   const [uploadedText, setUploadedText] = useState('');
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isPdf, setIsPdf] = useState(false);
 
   const navigate = useNavigate();
 
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
   const handleUpload = async () => {
     if (!file) return;
+    setSuccessMessage('');
+    setUploading(true);
 
-    const formData = new FormData();
-    formData.append('file', file);
+    const name = file.name;
+    setFileName(name);
+    const extension = name.split('.').pop()?.toLowerCase();
+    setIsPdf(extension === 'pdf');
 
     try {
-      const res = await axios.post<UploadResponse>(
-        'https://localhost:5000/api/document/upload',
-        formData
-      );
+      if (extension === 'txt' || extension === 'md') {
+        const uploaded = await readFileAsText(file);
+        setUploadedText(uploaded);
 
-      if (res.data.duplicate) {
-        setExistingText(res.data.existingContent || '');
-        setUploadedText(res.data.uploadedContent || '');
-        setFileName(res.data.fileName || '');
-        setIsDuplicate(true);
+        const existingDoc = await getDocumentByName(name);
+        setExistingText(existingDoc.content || '');
+        setIsDuplicate(true); // Show diff viewer
       } else {
-        alert('✅ File uploaded successfully!');
+        // No diff — assume direct upload (pdf, docx, etc.)
+        await confirmUpload();
       }
-    } catch (err: any) {
-      alert('❌ Upload failed: ' + (err?.response?.data || err.message));
+    } catch {
+      // No existing doc or fallback
+      await confirmUpload();
+    } finally {
+      setUploading(false);
     }
   };
 
   const confirmUpload = async () => {
-    setIsDuplicate(false);
-    alert('✅ Changes confirmed and uploaded.');
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    setUploading(true);
+
+    try {
+      await apiClient.post('/document/upload', formData);
+      setSuccessMessage('✅ Document uploaded successfully.');
+      setIsDuplicate(false);
+      setFile(null);
+    } catch {
+      alert('❌ Upload failed.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -60,25 +84,53 @@ const UploadForm = () => {
       </button>
 
       <h3>Upload Document</h3>
+
+      {successMessage && (
+        <div className="alert alert-success">{successMessage}</div>
+      )}
+
       <input
         type="file"
         className="form-control"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
       />
-      <button className="btn btn-primary mt-2 me-2" onClick={handleUpload}>
-        Upload
+
+      <button
+        className="btn btn-primary mt-2 me-2"
+        onClick={handleUpload}
+        disabled={!file || uploading}
+      >
+        {uploading ? 'Uploading...' : 'Upload'}
       </button>
 
-      {isDuplicate && (
+      {/* 🧾 PDF Preview */}
+      {isPdf && file && (
         <div className="mt-4">
+          <h5>PDF Preview</h5>
+          <iframe
+            src={URL.createObjectURL(file)}
+            title="PDF Preview"
+            width="100%"
+            height="600px"
+          />
+        </div>
+      )}
+
+      {/* 🧠 Text diff viewer */}
+      {isDuplicate && (
+        <div className="mt-10">
           <h5>File with same name exists. Here's the comparison:</h5>
           <DiffViewer
             oldText={existingText}
             newText={uploadedText}
             fileName={fileName}
           />
-          <button className="btn btn-success mt-2" onClick={confirmUpload}>
-            Confirm Upload Anyway
+          <button
+            className="btn btn-success mt-2"
+            onClick={confirmUpload}
+            disabled={uploading}
+          >
+            {uploading ? 'Confirming...' : 'Confirm Upload Anyway'}
           </button>
         </div>
       )}

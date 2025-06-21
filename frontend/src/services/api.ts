@@ -1,22 +1,14 @@
 import axios from 'axios';
 import type { StoredDocument, UploadResponse } from '../types';
 import type { LoginResponse } from '../shared/types';
+import type { SystemStats } from '../types';
 
-// 📦 Base API client with auto-token support
+// 📦 Base API client with cookied-based auth support
 const API_BASE = 'https://localhost:5000/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
-});
-
-// 🔐 Inject token into every request if available
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && config.headers) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return config;
+  withCredentials: true, // ✅ Ensures cookies are sent with each request
 });
 
 // 🔐 Login and return token + user info
@@ -61,4 +53,25 @@ export const getDocumentByName = async (
 // 🗑️ Delete a document by filename
 export const deleteDocument = async (fileName: string): Promise<void> => {
   await apiClient.delete(`/document/delete/${encodeURIComponent(fileName)}`);
+};
+
+// Chat
+export const streamChat = async (
+  message: string
+): Promise<ReadableStream<Uint8Array> | null> => {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  return res.body; // the actual stream
+};
+
+// 🛠️ Get system stats (admin only)
+export const getSystemStats = async (): Promise<SystemStats> => {
+  const res = await apiClient.get<SystemStats>('/admin/stats');
+  return res.data;
 };

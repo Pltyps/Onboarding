@@ -35,21 +35,24 @@ public class AuthController : ControllerBase
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
+            Path = "/",
             Expires = DateTimeOffset.UtcNow.AddHours(1)
         });
         HttpContext.Response.Cookies.Append("user_role", user.Role, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
+            Path = "/",
             Expires = DateTimeOffset.UtcNow.AddHours(1)
         });
         HttpContext.Response.Cookies.Append("user_department", user.Department, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
+            Path = "/",
             Expires = DateTimeOffset.UtcNow.AddHours(1)
         });
 

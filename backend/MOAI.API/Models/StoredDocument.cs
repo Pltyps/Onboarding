@@ -19,11 +19,6 @@ public class StoredDocument
     /// </summary>
     public string Department { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Clean, readable plaintext content from the uploaded file.
-    /// Stored here instead of binary file.
-    /// </summary>
-    public string Content { get; set; } = string.Empty;
 
     /// <summary>
     /// Email or username of the uploader (for auditing).
@@ -34,4 +29,16 @@ public class StoredDocument
     /// Timestamp (UTC) of when the file was uploaded or replaced.
     /// </summary>
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+
+    public int Version { get; set; } = 1;
+
+    public bool IsActive { get; set; } = true;
+
+    public long FileSizeBytes { get; set; } = 0;
+
+    public required string PdfPath { get; set; }
+
+    public string Content { get; set; } = "";
+
+
 }

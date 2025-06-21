@@ -3,12 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\utils\\dummyauthhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\utils\\dummyauthhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\services\\openaiclientservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\services\\openaiclientservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,32 +14,19 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "DummyAuthHandler.cs",
-              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Utils\\DummyAuthHandler.cs",
-              "RelativeDocumentMoniker": "backend\\MOAI.API\\Utils\\DummyAuthHandler.cs",
-              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Utils\\DummyAuthHandler.cs",
-              "RelativeToolTip": "backend\\MOAI.API\\Utils\\DummyAuthHandler.cs",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAmwA8AAAAtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-10T23:14:48.61Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Program.cs",
-              "RelativeDocumentMoniker": "backend\\MOAI.API\\Program.cs",
-              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Program.cs",
-              "RelativeToolTip": "backend\\MOAI.API\\Program.cs",
-              "ViewState": "AgIAAIwAAAAAAAAAAAAqwJEAAAAYAAAAAAAAAA==",
+              "Title": "OpenAiClientService.cs",
+              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\OpenAiClientService.cs",
+              "RelativeDocumentMoniker": "backend\\MOAI.API\\Services\\OpenAiClientService.cs",
+              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\OpenAiClientService.cs",
+              "RelativeToolTip": "backend\\MOAI.API\\Services\\OpenAiClientService.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAswD8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-10T22:53:37.24Z",
+              "WhenOpened": "2025-06-20T19:36:00.913Z",
               "EditorCaption": ""
             }
           ]

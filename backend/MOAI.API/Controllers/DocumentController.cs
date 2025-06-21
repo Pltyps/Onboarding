@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using MOAI.API.Models;
 using MOAI.API.Services;
+using MOAI.API.Validation;
 
 namespace MOAI.API.Controllers;
 
@@ -17,6 +19,7 @@ public class DocumentController : ControllerBase
         _docService = docService;
     }
 
+    // Upload Endpoint
     [Authorize(Roles = "Admin,FullTime")]
     [HttpPost("upload")]
     public async Task<IActionResult> Upload([FromForm] DocumentUploadRequest request)
@@ -24,43 +27,40 @@ public class DocumentController : ControllerBase
         var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
         var userDepartment = User.FindFirst("Department")?.Value;
 
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         if (request.File == null || request.File.Length == 0)
             return BadRequest("No file selected.");
 
-        string fileName = Path.GetFileName(request.File.FileName);
-        string sanitizedText;
+        var fileName = Path.GetFileName(request.File.FileName);
 
-        try
-        {
-            sanitizedText = await _docService.ExtractSafeTextAsync(request.File);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        if (!FileValidationConstants.AllowedExtensions.Contains(Path.GetExtension(fileName).ToLowerInvariant()))
+            return BadRequest("Only .txt, .md, .docx, or .pdf files are allowed.");
 
-        var (isDuplicate, existingContent) = await _docService.CheckForDuplicateAsync(fileName);
+        var (isDuplicate, existingPdfPath) = await _docService.CheckForDuplicateAsync(fileName);
         if (isDuplicate)
         {
             return Ok(new
             {
                 duplicate = true,
-                existingContent,
-                uploadedContent = sanitizedText,
-                fileName
+                fileName,
+                existingPdf = existingPdfPath
             });
         }
 
         await _docService.SaveFileAsync(
-            fileName: fileName,
+            request.File,
             department: userDepartment ?? "Unknown",
-            content: sanitizedText,
             uploadedBy: userEmail ?? "unknown"
         );
+
+
 
         return Ok(new { duplicate = false, message = "Upload successful." });
     }
 
+    // Get All files Endpoints
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -76,6 +76,7 @@ public class DocumentController : ControllerBase
         return Ok(docs);
     }
 
+    // Get JSON object by file name Endpoint
     [Authorize]
     [HttpGet("{fileName}")]
     public async Task<IActionResult> GetByFileName(string fileName)
@@ -87,7 +88,21 @@ public class DocumentController : ControllerBase
         return Ok(doc);
     }
 
-    [Authorize(Roles = "Admin")]
+    // Get raw content (stream) by file name for iframe display Endpoint
+    [Authorize]
+    [HttpGet("view/{fileName}")]
+    public async Task<IActionResult> View(string fileName)
+    {
+        var doc = await _docService.GetByFileNameAsync(fileName);
+        if (doc == null || !System.IO.File.Exists(doc.PdfPath))
+            return NotFound("Document or file missing.");
+
+        return PhysicalFile(doc.PdfPath, "application/pdf", enableRangeProcessing: true);
+    }
+
+
+    // Delete Endpoint
+    [Authorize(Roles = "Admin,FullTime")]
     [HttpDelete("delete/{fileName}")]
     public async Task<IActionResult> DeleteDocument(string fileName)
     {

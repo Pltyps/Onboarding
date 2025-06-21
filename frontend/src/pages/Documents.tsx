@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getAllDocuments } from '../services/api';
+import { getAllDocuments, deleteDocument } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 // 🔧 Type definition for a stored document
 interface Document {
@@ -21,6 +22,7 @@ const Documents: React.FC = () => {
   const docsPerPage = 5;
 
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // 🔃 Fetch documents from backend
   useEffect(() => {
@@ -49,6 +51,17 @@ const Documents: React.FC = () => {
   const indexOfFirstDoc = indexOfLastDoc - docsPerPage;
   const currentDocs = filteredDocs.slice(indexOfFirstDoc, indexOfLastDoc);
   const totalPages = Math.ceil(filteredDocs.length / docsPerPage);
+
+  // 🗑️ Delete document handle
+  const handleDelete = async (fileName: string) => {
+    if (!window.confirm(`Delete ${fileName}?`)) return;
+    try {
+      await deleteDocument(fileName);
+      setDocs((prev) => prev.filter((doc) => doc.fileName !== fileName));
+    } catch {
+      alert('Failed to delete document.');
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -102,12 +115,24 @@ const Documents: React.FC = () => {
                     <td>{doc.uploadedBy}</td>
                     <td>{new Date(doc.uploadedAt).toLocaleString()}</td>
                     <td>
-                      <a
-                        href={`/documents/${encodeURIComponent(doc.fileName)}`}
+                      <button
                         className="btn btn-sm btn-outline-primary"
+                        onClick={() =>
+                          navigate(
+                            `/documents/${encodeURIComponent(doc.fileName)}`
+                          )
+                        }
                       >
                         View
-                      </a>
+                      </button>
+                      {['Admin', 'FullTime'].includes(user?.role || '') && (
+                        <button
+                          className="btn btn-sm btn-outline-danger ms-2"
+                          onClick={() => handleDelete(doc.fileName)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -1,0 +1,11 @@
+bin/
+obj/
+.vscode/
+.git/
+*.md
+*.log
+.env
+*.user
+*.suo
+*.DS_Store
+node_modules/

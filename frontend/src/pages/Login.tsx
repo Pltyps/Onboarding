@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import type { UserRole } from '../types';
 
 const Login: React.FC = () => {
@@ -19,17 +18,10 @@ const Login: React.FC = () => {
 
     try {
       const {
-        token,
         email: userEmail,
         role,
         department,
       } = await loginUser(email, password);
-
-      // ✅ Store token for future requests
-      localStorage.setItem('token', token);
-
-      // ✅ Attach token to axios
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       // ✅ Optionally store other user info
       localStorage.setItem(

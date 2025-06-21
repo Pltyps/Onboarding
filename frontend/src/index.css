@@ -1,5 +1,9 @@
 /* index.css (only foundational reset, no layout or theme here) */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-synthesis: none;
@@ -14,5 +18,7 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
+
+
 
 /* Let App.css control layout and theme */

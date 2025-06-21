@@ -37,3 +37,16 @@ export interface UploadSuccessResult {
 
 // 🔄 Combined result type
 export type UploadResponse = UploadDuplicateResult | UploadSuccessResult;
+
+export interface SystemStats {
+  serverTime: string;
+  environment: string;
+  memoryUsageMB: number;
+  machineName: string;
+  uptimeMinutes: number;
+  activeUsers: {
+    FullTime: number;
+    Admin: number;
+    [key: string]: number; // in case you add more roles later
+  };
+}

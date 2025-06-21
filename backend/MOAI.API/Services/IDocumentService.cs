@@ -9,24 +9,11 @@ namespace MOAI.API.Services;
 /// </summary>
 public interface IDocumentService
 {
-    /// <summary>
-    /// Checks if a file with the same name already exists.
-    /// </summary>
-    Task<(bool IsDuplicate, string ExistingContent)> CheckForDuplicateAsync(string fileName);
+    Task SaveFileAsync(IFormFile file, string department, string uploadedBy);
 
-    /// <summary>
-    /// Extracts safe plain text content from the uploaded file.
-    /// </summary>
-    Task<string> ExtractSafeTextAsync(IFormFile file);
-
-    /// <summary>
-    /// Stores the uploaded file content, replacing older version if needed.
-    /// </summary>
-    Task SaveFileAsync(string fileName, string department, string content, string uploadedBy);
+    Task<(bool IsDuplicate, string ExistingPath)> CheckForDuplicateAsync(string fileName);
 
     Task<List<StoredDocument>> GetAllAsync();
     Task<StoredDocument?> GetByFileNameAsync(string fileName);
     Task<bool> DeleteFileAsync(string fileName);
-
-
 }

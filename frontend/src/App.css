@@ -27,8 +27,6 @@ body {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: var(--byu-light);
   color: var(--byu-text-light);
-  display: flex;
-  flex-direction: column;
   line-height: 1.6;
 }
 
@@ -248,6 +246,25 @@ body[data-theme='dark'] pre {
 :focus {
   outline: 2px dashed var(--byu-blue);
   outline-offset: 3px;
+}
+
+/* =======================
+   Chatbot + Chat UI
+   ======================= */
+@keyframes blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.dot {
+  animation: blink 1.4s infinite;
+  animation-delay: calc(var(--dot-index, 0) * 0.2s);
 }
 
 /* =======================
