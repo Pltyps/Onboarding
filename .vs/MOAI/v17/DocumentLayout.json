@@ -3,8 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\services\\openaiclientservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\services\\openaiclientservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\controllers\\chatcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\controllers\\chatcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\services\\chathistoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\services\\chathistoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|c:\\users\\navin\\onedrive\\desktop\\ai solutions\\moai\\backend\\moai.api\\models\\chatmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{725ED017-2B3D-E662-5809-28A088BC5FA2}|backend\\MOAI.API\\MOAI.API.csproj|solutionrelative:backend\\moai.api\\models\\chatmessage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,19 +22,45 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "OpenAiClientService.cs",
-              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\OpenAiClientService.cs",
-              "RelativeDocumentMoniker": "backend\\MOAI.API\\Services\\OpenAiClientService.cs",
-              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\OpenAiClientService.cs",
-              "RelativeToolTip": "backend\\MOAI.API\\Services\\OpenAiClientService.cs",
-              "ViewState": "AgIAAB0AAAAAAAAAAAAswD8AAAAAAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "ChatHistoryService.cs",
+              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\ChatHistoryService.cs",
+              "RelativeDocumentMoniker": "backend\\MOAI.API\\Services\\ChatHistoryService.cs",
+              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Services\\ChatHistoryService.cs",
+              "RelativeToolTip": "backend\\MOAI.API\\Services\\ChatHistoryService.cs",
+              "ViewState": "AgIAACgAAAAAAAAAAAAxwEIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-20T19:36:00.913Z",
+              "WhenOpened": "2025-06-27T22:58:31.755Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ChatMessage.cs",
+              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Models\\ChatMessage.cs",
+              "RelativeDocumentMoniker": "backend\\MOAI.API\\Models\\ChatMessage.cs",
+              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Models\\ChatMessage.cs",
+              "RelativeToolTip": "backend\\MOAI.API\\Models\\ChatMessage.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T22:57:50.216Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ChatController.cs",
+              "DocumentMoniker": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Controllers\\ChatController.cs",
+              "RelativeDocumentMoniker": "backend\\MOAI.API\\Controllers\\ChatController.cs",
+              "ToolTip": "C:\\Users\\Navin\\OneDrive\\Desktop\\AI Solutions\\MOAI\\backend\\MOAI.API\\Controllers\\ChatController.cs",
+              "RelativeToolTip": "backend\\MOAI.API\\Controllers\\ChatController.cs",
+              "ViewState": "AgIAAGgAAAAAAAAAAAA7wIMAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T22:55:41.244Z",
               "EditorCaption": ""
             }
           ]

@@ -5,7 +5,6 @@ using MOAI.API.Data;
 using MOAI.API.Models;
 using MOAI.API.Services;
 using DotNetEnv;
-using MOAI.API.Utils;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -45,8 +44,6 @@ builder.Services
 // ── Document + AI services ──
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
-builder.Services.AddScoped<IDocumentIndexService, DocumentIndexService>();
-
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<PdfConverterService>();
@@ -61,14 +58,14 @@ builder.Services.AddScoped<PolicyLoaderService>();
 
 builder.Services.AddScoped<IChatService, ChatService>();
 
+builder.Services.AddScoped<ChatHistoryService>();
+
+
 var app = builder.Build();
 
 // ── Build index and seed users ──
 using (var scope = app.Services.CreateScope())
 {
-    var indexer = scope.ServiceProvider.GetRequiredService<IDocumentIndexService>();
-    await indexer.InitializeAsync();
-
     // ✅ Seed admin + users
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.EnsureCreated();

@@ -2,7 +2,6 @@
 using MOAI.API.Data;
 using MOAI.API.Models;
 using MOAI.API.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using MOAI.API.Utils;
 
@@ -11,20 +10,17 @@ public class DocumentService : IDocumentService
     private readonly ApplicationDbContext _db;
     private readonly IWebHostEnvironment _env;
     private readonly PdfConverterService _pdfConverter;
-    private readonly IDocumentIndexService _indexer;
     private readonly IHttpContextAccessor _http;
 
     public DocumentService(
         ApplicationDbContext db,
         IWebHostEnvironment env,
         PdfConverterService pdfConverter,
-        IDocumentIndexService indexer,
         IHttpContextAccessor http)
     {
         _db = db;
         _env = env;
         _pdfConverter = pdfConverter;
-        _indexer = indexer;
         _http = http;
     }
 
@@ -124,7 +120,6 @@ public class DocumentService : IDocumentService
         }
 
         await _db.SaveChangesAsync();
-        await _indexer.IndexNewDocumentAsync(doc);
     }
 
     public async Task<List<StoredDocument>> GetAllAsync()

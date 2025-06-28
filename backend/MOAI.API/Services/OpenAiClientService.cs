@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;      // for List<T>
-using System.Linq;                     // for ToArray()
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using OpenAI.Chat;                     // for ChatClient, ChatMessage, etc.
+﻿using OpenAI.Chat;                     // for ChatClient, ChatMessage, etc.
 using OpenAI.Embeddings;               // for EmbeddingClient
 
 namespace MOAI.API.Services

@@ -4,7 +4,9 @@ namespace MOAI.API.Models
 {
     public class ChatRequest
     {
-        [Required]
-        public required string Message { get; set; }
+        public string Message { get; set; } = "";
+        public int ChatSessionId { get; set; }
+        public bool IsFirstMessage { get; set; } = false;
     }
+
 }

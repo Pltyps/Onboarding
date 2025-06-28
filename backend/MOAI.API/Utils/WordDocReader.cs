@@ -1,7 +1,5 @@
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using System;
-using System.Linq;
 using System.Text;
 
 namespace MOAI.API.Utils

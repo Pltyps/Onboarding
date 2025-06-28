@@ -1,15 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { rateMessage, getMessages } from '../services/api';
 
-const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<
-    { sender: 'user' | 'bot'; text: string }[]
-  >([]);
+interface ChatbotProps {
+  chatSessionId: number | null;
+  setChatSessionId: (id: number) => void;
+  onMessageSent: () => void;
+}
+
+const Chatbot: React.FC<ChatbotProps> = ({
+  chatSessionId,
+  setChatSessionId,
+  onMessageSent,
+}) => {
+  interface ChatMessage {
+    sender: 'user' | 'bot';
+    text: string;
+    messageId?: number;
+    isHelpful?: boolean | null;
+  }
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-expand textarea height
+  // Auto-expand textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -17,21 +33,72 @@ const Chatbot: React.FC = () => {
     }
   }, [input]);
 
-  // Scroll to latest message
+  // Scroll to bottom on new message
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Fetch messages when session changes
+  useEffect(() => {
+    if (chatSessionId === null) return;
+
+    const loadMessages = async () => {
+      try {
+        const loaded = await getMessages(chatSessionId);
+        setMessages(loaded);
+      } catch (err) {
+        console.error('Failed to load messages:', err);
+      }
+    };
+
+    loadMessages();
+  }, [chatSessionId]);
+
+  const handleRating = async (index: number, isHelpful: boolean) => {
+    const msg = messages[index];
+    if (!msg.messageId || msg.isHelpful !== undefined) return;
+
+    try {
+      await rateMessage(msg.messageId, isHelpful);
+      const updated = [...messages];
+      updated[index] = { ...msg, isHelpful };
+      setMessages(updated);
+    } catch (err) {
+      console.error('Rating failed', err);
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isStreaming) return;
+
+    let sessionId = chatSessionId;
+
+    if (!sessionId) {
+      const res = await fetch('/api/chat/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(''),
+      });
+
+      const data = await res.json();
+      const newId: number = data.id; // ✅ definitely a number
+      setChatSessionId(newId);
+      sessionId = newId;
+    }
+
     setMessages((m) => [...m, { sender: 'user', text: input }]);
     setInput('');
     setIsStreaming(true);
 
-    const res = await fetch('/api/chat?stream=true', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input }),
+      body: JSON.stringify({
+        message: input,
+        chatSessionId: sessionId,
+        isFirstMessage:
+          messages.filter((m) => m.sender === 'user').length === 0,
+      }),
     });
 
     if (!res.ok) {
@@ -41,28 +108,14 @@ const Chatbot: React.FC = () => {
       return;
     }
 
-    setMessages((m) => [...m, { sender: 'bot', text: '' }]);
-    const reader = res.body!.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value);
-      setMessages((m) => {
-        const copy = [...m];
-        copy[copy.length - 1] = { sender: 'bot', text: buf };
-        return copy;
-      });
-    }
-
+    const { reply, messageId } = await res.json();
+    setMessages((m) => [...m, { sender: 'bot', text: reply, messageId }]);
     setIsStreaming(false);
+    onMessageSent();
   };
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Chat area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
         {messages.map((m, i) => (
           <div
@@ -78,13 +131,38 @@ const Chatbot: React.FC = () => {
                 }`}
             >
               {m.text}
+              {m.sender === 'bot' && (
+                <div className="mt-2 flex gap-2 text-sm text-gray-500">
+                  <button
+                    aria-label="Rate this message helpful"
+                    onClick={() => handleRating(i, true)}
+                    disabled={m.isHelpful !== undefined}
+                    className={`hover:text-green-600 ${m.isHelpful === true ? 'font-bold text-green-600' : ''}`}
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() => handleRating(i, false)}
+                    disabled={m.isHelpful !== undefined}
+                    className={`hover:text-red-600 ${m.isHelpful === false ? 'font-bold text-red-600' : ''}`}
+                  >
+                    👎
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
+        {isStreaming && (
+          <div className="flex justify-start">
+            <div className="px-5 py-3 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-2xl max-w-[80%] italic">
+              ...
+            </div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
-      {/* Input bar */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -109,7 +187,6 @@ const Chatbot: React.FC = () => {
             disabled={isStreaming}
           />
         </div>
-
         <button
           type="submit"
           disabled={!input.trim() || isStreaming}

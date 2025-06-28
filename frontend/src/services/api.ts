@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { StoredDocument, UploadResponse } from '../types';
-import type { LoginResponse } from '../shared/types';
+import type { LoginResponse, ChatMessage } from '../shared/types';
 import type { SystemStats } from '../types';
 
 // 📦 Base API client with cookied-based auth support
@@ -73,5 +73,40 @@ export const streamChat = async (
 // 🛠️ Get system stats (admin only)
 export const getSystemStats = async (): Promise<SystemStats> => {
   const res = await apiClient.get<SystemStats>('/admin/stats');
+  return res.data;
+};
+
+// 💬 Get all chat sessions for current user
+export const getChats = async (): Promise<ChatSession[]> => {
+  const res = await apiClient.get<ChatSession[]>('/chat');
+  return res.data;
+};
+
+// ➕ Create a new chat session (optional title)
+export const createChat = async (title: string = ''): Promise<ChatSession> => {
+  const res = await apiClient.post<ChatSession>('/chat/new', title, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return res.data;
+};
+
+// 🗑️ Delete a chat session by ID
+export const deleteChat = async (id: number): Promise<void> => {
+  await apiClient.delete(`/chat/${id}`);
+};
+
+export const rateMessage = async (messageId: number, isHelpful: boolean) => {
+  await apiClient.post('/chat/rate', { messageId, isHelpful });
+};
+
+export interface ChatSession {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+// api call to fetch message for a chat session
+export const getMessages = async (chatId: number): Promise<ChatMessage[]> => {
+  const res = await apiClient.get<ChatMessage[]>(`/chat/${chatId}/messages`);
   return res.data;
 };

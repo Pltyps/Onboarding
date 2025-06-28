@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using MOAI.API.Validation;
 
 namespace MOAI.API.Validation
 {
