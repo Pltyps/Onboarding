@@ -23,21 +23,26 @@ namespace MOAI.API.Services
 
         public async Task<string> GetChatCompletionAsync(string prompt, CancellationToken ct)
         {
-            // no CancellationToken overload on LoadSystemPolicyAsync
-            var policyText = await _policyLoader.LoadSystemPolicyAsync();  // :contentReference[oaicite:5]{index=5}
+            var policyText = await _policyLoader.LoadSystemPolicyAsync();
 
-            var baseGuidelines = /* ... your guidelines ... */ "";
+            // Compact, trimmed system message
+            var systemMsg = new SystemChatMessage(policyText?.Trim() ?? "");
+
+            // Safe prompt (e.g., ≤ 3000–4000 chars), not just blindly passing long strings
+            var safePrompt = prompt.Length > 3500 ? prompt[..3500] + "..." : prompt;
 
             var messages = new List<ChatMessage>
             {
-                new SystemChatMessage($"{baseGuidelines}\n\n{policyText}"),
-                new UserChatMessage(prompt)
+                systemMsg,
+                new UserChatMessage(safePrompt)
             };
 
+            Console.WriteLine($"[🔎 Prompt token length]: {safePrompt.Length / 4} estimated tokens");
+
             var response = await _chat.CompleteChatAsync(messages, cancellationToken: ct);
-            var completion = response.Value;
-            return completion.Content[0].Text;
+            return response.Value.Content[0].Text;
         }
+
 
         public async Task<float[]> GetEmbeddingAsync(string input, CancellationToken ct)
         {

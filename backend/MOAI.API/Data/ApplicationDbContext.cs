@@ -25,4 +25,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(m => m.ChatSessionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
+    public DbSet<SystemStats> SystemStats { get; set; } = null!;
+
 }
