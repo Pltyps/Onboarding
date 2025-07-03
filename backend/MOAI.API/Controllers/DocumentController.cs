@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MOAI.API.Models;
 using MOAI.API.Services;
+using MOAI.API.Utils;
 using MOAI.API.Validation;
 
 namespace MOAI.API.Controllers;
@@ -113,4 +114,37 @@ public class DocumentController : ControllerBase
 
         return Ok(new { message = "File deleted successfully." });
     }
+
+    // Temporary preview endpoint for .docx files on upload before being confirmed to be committed to the database
+    [Authorize(Roles = "Admin,FullTime")]
+    [HttpPost("preview")]
+    public async Task<IActionResult> ExtractPreview([FromForm] IFormFile file)
+    {
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext != ".docx")
+            return BadRequest("Only .docx preview is supported.");
+
+        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            using (var stream = new FileStream(tempPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var extracted = WordDocReader.ReadToText(tempPath);
+            return Ok(new { content = extracted });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error reading file: {ex.Message}");
+        }
+        finally
+        {
+            if (System.IO.File.Exists(tempPath))
+                System.IO.File.Delete(tempPath);
+        }
+    }
+
 }

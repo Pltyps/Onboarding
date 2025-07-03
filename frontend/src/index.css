@@ -13,12 +13,12 @@
 }
 
 html,
-body {
+body,
+#root {
+  height: 100%;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
-
 
 /* Let App.css control layout and theme */

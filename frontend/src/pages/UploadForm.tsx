@@ -34,20 +34,46 @@ const UploadForm = () => {
     const extension = name.split('.').pop()?.toLowerCase();
     setIsPdf(extension === 'pdf');
 
-    try {
-      if (extension === 'txt' || extension === 'md') {
-        const uploaded = await readFileAsText(file);
-        setUploadedText(uploaded);
+    if (extension === 'pdf') {
+      await confirmUpload();
+      setUploading(false);
+      return;
+    }
 
+    try {
+      let uploaded = '';
+
+      if (extension === 'docx') {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const res = await apiClient.post<{ content: string }>(
+            '/document/preview',
+            formData
+          );
+          uploaded = res.data.content || '';
+        } catch {
+          alert('❌ Failed to preview .docx file.');
+          setUploading(false);
+          return;
+        }
+      } else {
+        uploaded = await readFileAsText(file);
+      }
+
+      setUploadedText(uploaded);
+
+      try {
         const existingDoc = await getDocumentByName(name);
         setExistingText(existingDoc.content || '');
-        setIsDuplicate(true); // Show diff viewer
-      } else {
-        // No diff — assume direct upload (pdf, docx, etc.)
+        setIsDuplicate(true);
+      } catch {
+        // No match in database – just upload
         await confirmUpload();
       }
     } catch {
-      // No existing doc or fallback
+      // Failed to read file locally — fallback
       await confirmUpload();
     } finally {
       setUploading(false);
@@ -118,20 +144,35 @@ const UploadForm = () => {
 
       {/* 🧠 Text diff viewer */}
       {isDuplicate && (
-        <div className="mt-10">
+        <div className="mt-4">
           <h5>File with same name exists. Here's the comparison:</h5>
+
           <DiffViewer
             oldText={existingText}
             newText={uploadedText}
             fileName={fileName}
           />
-          <button
-            className="btn btn-success mt-2"
-            onClick={confirmUpload}
-            disabled={uploading}
-          >
-            {uploading ? 'Confirming...' : 'Confirm Upload Anyway'}
-          </button>
+
+          <div className="d-flex gap-2 mt-3 mb-3">
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                setIsDuplicate(false);
+                setFile(null);
+                setExistingText('');
+                setUploadedText('');
+              }}
+            >
+              Cancel Upload
+            </button>
+            <button
+              className="btn btn-success"
+              onClick={confirmUpload}
+              disabled={uploading}
+            >
+              {uploading ? 'Confirming...' : 'Confirm Upload Anyway'}
+            </button>
+          </div>
         </div>
       )}
     </div>

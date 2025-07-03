@@ -6,6 +6,8 @@ obj/
 .vscode/
 *.user
 *.suo
+.vs/
+
 
 # SQLite DB (optional to ignore)
 *.db
