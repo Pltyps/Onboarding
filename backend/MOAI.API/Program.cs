@@ -54,8 +54,6 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<OpenAiClientService>();
 
-builder.Services.AddScoped<PolicyLoaderService>();
-
 builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddScoped<ChatHistoryService>();

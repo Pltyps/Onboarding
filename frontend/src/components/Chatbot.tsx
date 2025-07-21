@@ -1,6 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { rateMessage, getMessages } from '../services/api';
 
+// to make url links clickable
+function linkify(text: string): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map((part, i) =>
+    urlRegex.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 underline hover:text-blue-800"
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
 interface ChatbotProps {
   chatSessionId: number | null;
   setChatSessionId: (id: number) => void;
@@ -130,7 +150,7 @@ const Chatbot: React.FC<ChatbotProps> = ({
                     : 'bg-gray-100 dark:bg-gray-700 text-black dark:text-white rounded-bl-sm self-start'
                 }`}
             >
-              {m.text}
+              {m.sender === 'bot' ? linkify(m.text) : m.text}
               {m.sender === 'bot' && (
                 <div className="mt-2 flex gap-2 text-sm text-gray-500">
                   <button

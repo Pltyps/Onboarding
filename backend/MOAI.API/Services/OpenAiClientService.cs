@@ -9,24 +9,20 @@ namespace MOAI.API.Services
 
         private readonly ChatClient _chat;
         private readonly EmbeddingClient _embeddings;
-        private readonly PolicyLoaderService _policyLoader;
 
         public OpenAiClientService(
-            IConfiguration config,
-            PolicyLoaderService policyLoader)
+            IConfiguration config)
         {
             var apiKey = config["OPENAI_API_KEY"]!;
             _chat = new ChatClient(model: "gpt-3.5-turbo", apiKey: apiKey);
             _embeddings = new EmbeddingClient(model: "text-embedding-3-small", apiKey: apiKey);
-            _policyLoader = policyLoader;
         }
 
         public async Task<string> GetChatCompletionAsync(string prompt, CancellationToken ct)
         {
-            var policyText = await _policyLoader.LoadSystemPolicyAsync();
-
+        
             // Compact, trimmed system message
-            var systemMsg = new SystemChatMessage(policyText?.Trim() ?? "");
+            var systemMsg = new SystemChatMessage("");
 
             // Safe prompt (e.g., ≤ 3000–4000 chars), not just blindly passing long strings
             var safePrompt = prompt.Length > 3500 ? prompt[..3500] + "..." : prompt;
