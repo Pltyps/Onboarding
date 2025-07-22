@@ -82,6 +82,29 @@ namespace MOAI.API.Services
             return "For official university policy, refer to the BYU Policy Portal at https://policy.byu.edu/ and check your department’s SharePoint site for specific onboarding materials.";
         }
 
+        private string? MatchPolicyLink(string message)
+        {
+            var lower = message.ToLowerInvariant();
+
+            if (lower.Contains("copyright"))
+                return "https://copyright.byu.edu/copyright-faqs-basics";
+
+            if (lower.Contains("vehicle rental") || lower.Contains("car rental"))
+                return "https://pf.byu.edu/vehicle-rental";
+
+            if (lower.Contains("room policy") || lower.Contains("event") || lower.Contains("scheduling"))
+                return "https://scheduling.byu.edu/scheduling-policies";
+
+            if (lower.Contains("speakers") || lower.Contains("speaker policy"))
+                return "https://policy.byu.edu/view/speakers-and-events-policy?s=s706";
+
+            if (lower.Contains("policy") || lower.Contains("procedure") || lower.Contains("compliance"))
+                return "https://policy.byu.edu/";
+
+            return null;
+        }
+
+
         // --------------------------------------------------------------------------------
         // 📊 DATA EXTRACTION HELPERS
         // --------------------------------------------------------------------------------
@@ -187,7 +210,7 @@ namespace MOAI.API.Services
         // 🧱 PROMPT TEMPLATE
         // --------------------------------------------------------------------------------
 
-        private string BuildPrompt(string userQuery, string department, string context, string priorHistory, bool includePolicy)
+        private string BuildPrompt(string userQuery, string department, string context, string priorHistory, string? policyLink)
         {
             return $"""
             You are an Assistant Chatbot in the BYU Marriott onboarding app.
@@ -197,7 +220,9 @@ namespace MOAI.API.Services
             - Quote directly from the document content, citing document names and relevant sections.
             - Do NOT make up any information or speculate beyond provided content.
             - Ensure your answers comply with university policies before responding.
-            {(includePolicy ? GetPolicyReference() : "")}
+            {(policyLink != null ? $"Refer to the following official university policy link: {policyLink}" : "")}
+
+
 
             Current User Question:
             "{userQuery}"
@@ -210,7 +235,10 @@ namespace MOAI.API.Services
 
             Instructions:
             - Respond ONLY to the current question.
-            - Format your answer clearly as steps or actionable suggestions.
+            - If the user’s question matches instructions in the documents (e.g., steps, procedures, login guides), extract and list those exact steps.
+            - Preserve exact wording and steps from the source if they are found.
+            - DO NOT summarize—reproduce specific instructions if available.
+            - Format them clearly as a numbered list.
             - Always cite the source file in brackets, e.g., [Business Manager Handbook.docx].
             - Do not speculate. If no data is found, suggest contacting the supervisor.
             - Complete your response in full.
@@ -295,7 +323,9 @@ namespace MOAI.API.Services
                 historyBlock.AppendLine($"{msg.Role.ToUpperInvariant()}: {msg.Message}");
             }
 
-            var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), IsPolicyQuestion(message));
+            var policyLink = MatchPolicyLink(message);
+            var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), policyLink);
+
             reply = await _openAi.GetChatCompletionAsync(prompt, ct);
 
             if (string.IsNullOrWhiteSpace(reply))
@@ -322,7 +352,9 @@ namespace MOAI.API.Services
                 historyBlock.AppendLine($"{msg.Role.ToUpperInvariant()}: {msg.Message}");
             }
 
-            var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), IsPolicyQuestion(message));
+            var policyLink = MatchPolicyLink(message);
+            var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), policyLink);
+
             var reply = await _openAi.GetChatCompletionAsync(prompt, ct);
 
             await _history.AddMessageAsync(chatSessionId, "user", message);

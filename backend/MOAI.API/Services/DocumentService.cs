@@ -49,33 +49,29 @@ public class DocumentService : IDocumentService
 
         string? extractedText = null;
 
-        if (extension == ".txt" || extension == ".md")
-        {
-            extractedText = await File.ReadAllTextAsync(tempPath);
-        }
-        else if (extension == ".docx")
-        {
-            extractedText = WordDocReader.ReadToText(tempPath);
-        }
-
         string pdfPath;
         var outputDir = Path.Combine(_env.WebRootPath, "converted");
         Directory.CreateDirectory(outputDir);
 
         if (extension == ".docx")
         {
-            extractedText = WordDocReader.ReadToText(tempPath); // already available
-            var html = $"<pre>{System.Net.WebUtility.HtmlEncode(extractedText ?? "")}</pre>";
+            // ✅ Extract text for chatbot context
+            var rawText = WordDocReader.ReadToText(tempPath);
+            extractedText = FileSanitizer.Sanitize(rawText);
+
+            // ✅ Convert original file to PDF using LibreOffice
             var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
-            Console.WriteLine($"[DOCX] Fallback using HTML → PDF for: {originalFileName}");
-            pdfPath = _pdfConverter.ConvertHtmlToPdf(html, targetPdfPath);
+            pdfPath = _pdfConverter.ConvertToPdf(tempPath, targetPdfPath);
         }
         else if (extension == ".txt" || extension == ".md")
         {
+            // ✅ Extract raw text and render via <pre>
+            extractedText = await File.ReadAllTextAsync(tempPath);
             var html = $"<pre>{System.Net.WebUtility.HtmlEncode(extractedText ?? "")}</pre>";
             var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
             pdfPath = _pdfConverter.ConvertHtmlToPdf(html, targetPdfPath);
         }
+
 
         else if (extension == ".pdf")
         {

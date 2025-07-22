@@ -21,11 +21,19 @@ namespace MOAI.API.Utils
                 foreach (var para in body.Descendants<Paragraph>())
                 {
                     var text = para.InnerText.Trim();
-                    if (!string.IsNullOrWhiteSpace(text))
-                        sb.AppendLine(text);
+
+                    // Skip empty or irrelevant content
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+                    if (text.Contains("TOC", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (text.Contains("PAGEREF", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (text.Contains(@"\o", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    // Normalize tabs and weird spacing
+                    text = System.Text.RegularExpressions.Regex.Replace(text, @"\s{2,}", " ");
+                    sb.AppendLine(text);
                 }
 
-                var result = sb.ToString();
+                var result = sb.ToString().Trim();
                 Console.WriteLine($"[WordDocReader] Extracted {result.Length} characters from: {path}");
                 return result;
             }
