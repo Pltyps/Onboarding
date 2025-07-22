@@ -64,8 +64,11 @@ public class DocumentService : IDocumentService
 
         if (extension == ".docx")
         {
+            extractedText = WordDocReader.ReadToText(tempPath); // already available
+            var html = $"<pre>{System.Net.WebUtility.HtmlEncode(extractedText ?? "")}</pre>";
             var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
-            pdfPath = _pdfConverter.ConvertToPdf(tempPath, targetPdfPath);
+            Console.WriteLine($"[DOCX] Fallback using HTML → PDF for: {originalFileName}");
+            pdfPath = _pdfConverter.ConvertHtmlToPdf(html, targetPdfPath);
         }
         else if (extension == ".txt" || extension == ".md")
         {

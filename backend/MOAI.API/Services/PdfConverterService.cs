@@ -16,6 +16,10 @@ namespace MOAI.API.Services
             var outputDir = Path.GetDirectoryName(outputPath)!;
             Directory.CreateDirectory(outputDir);
 
+            Console.WriteLine($"[PDF] input: {inputPath}");
+            Console.WriteLine($"[PDF] outputDir: {outputDir}");
+            Console.WriteLine($"[PDF] expecting: {outputPath}");
+
             var psi = new ProcessStartInfo
             {
                 FileName = "soffice",
