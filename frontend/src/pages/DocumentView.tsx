@@ -27,7 +27,7 @@ const DocumentView: React.FC = () => {
       <h2 className="mb-3">{fileName}</h2>
 
       <iframe
-        src={`/api/document/view/${encodeURIComponent(fileName!)}`}
+        src={`https://moai-backend-gbgv.onrender.com/api/document/view/${encodeURIComponent(fileName!)}`}
         title="Document Viewer"
         width="100%"
         height="600px"
