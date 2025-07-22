@@ -66,7 +66,7 @@ const Login: React.FC = () => {
         </h2>
 
         <img
-          src="../public/BYUMarriott_centered_white-1.png"
+          src="/BYUMarriott_centered_white-1.png"
           alt="BYU Marriott Logo"
           title="Go to login"
           onClick={() => navigate('/login')}
