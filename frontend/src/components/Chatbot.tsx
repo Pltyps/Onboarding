@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { rateMessage, getMessages } from '../services/api';
+import {
+  API_BASE,
+  streamChat,
+  rateMessage,
+  getMessages,
+} from '../services/api';
 
 // to make url links clickable
 function linkify(text: string): React.ReactNode {
@@ -45,7 +50,6 @@ const Chatbot: React.FC<ChatbotProps> = ({
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-expand textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -53,12 +57,10 @@ const Chatbot: React.FC<ChatbotProps> = ({
     }
   }, [input]);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch messages when session changes
   useEffect(() => {
     if (chatSessionId === null) return;
 
@@ -93,45 +95,63 @@ const Chatbot: React.FC<ChatbotProps> = ({
 
     let sessionId = chatSessionId;
 
-    if (!sessionId) {
-      const res = await fetch('/api/chat/new', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(''),
-      });
+    if (sessionId === null) {
+      try {
+        const res = await fetch(`${API_BASE}/chat/new`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(''),
+        });
 
-      const data = await res.json();
-      const newId: number = data.id; // ✅ definitely a number
-      setChatSessionId(newId);
-      sessionId = newId;
+        const data = await res.json();
+        sessionId = data.id;
+        if (typeof sessionId !== 'number') {
+          console.error('Invalid session ID from backend');
+          return;
+        }
+
+        setChatSessionId(sessionId);
+      } catch (err) {
+        console.error('Failed to create chat session', err);
+        return;
+      }
     }
 
-    setMessages((m) => [...m, { sender: 'user', text: input }]);
+    setMessages((prev) => [...prev, { sender: 'user', text: input }]);
     setInput('');
     setIsStreaming(true);
+    setMessages((prev) => [...prev, { sender: 'bot', text: '' }]);
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: input,
-        chatSessionId: sessionId,
-        isFirstMessage:
-          messages.filter((m) => m.sender === 'user').length === 0,
-      }),
-    });
+    try {
+      const stream = await streamChat(sessionId, input);
+      if (!stream) throw new Error('No response stream');
 
-    if (!res.ok) {
-      const err = await res.text();
-      setMessages((m) => [...m, { sender: 'bot', text: `Error: ${err}` }]);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.sender === 'bot') {
+            last.text += chunk;
+          }
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Chat stream failed', err);
+      setMessages((m) => [...m, { sender: 'bot', text: 'Error during chat' }]);
+    } finally {
       setIsStreaming(false);
-      return;
+      onMessageSent();
     }
-
-    const { reply, messageId } = await res.json();
-    setMessages((m) => [...m, { sender: 'bot', text: reply, messageId }]);
-    setIsStreaming(false);
-    onMessageSent();
   };
 
   return (

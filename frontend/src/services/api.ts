@@ -4,7 +4,7 @@ import type { LoginResponse, ChatMessage } from '../shared/types';
 import type { SystemStats } from '../types';
 
 // 📦 Base API client with cookied-based auth support
-const API_BASE = 'https://moai-backend-gbgv.onrender.com/api';
+export const API_BASE = 'https://moai-backend-gbgv.onrender.com/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
@@ -57,17 +57,24 @@ export const deleteDocument = async (fileName: string): Promise<void> => {
 
 // Chat
 export const streamChat = async (
+  chatSessionId: number,
   message: string
 ): Promise<ReadableStream<Uint8Array> | null> => {
-  const res = await fetch('/api/chat', {
+  const res = await fetch(`${API_BASE}/chat/send/${chatSessionId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify({ message }),
   });
 
-  return res.body; // the actual stream
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Chat failed: ${res.status} ${err}`);
+  }
+
+  return res.body;
 };
 
 // 🛠️ Get system stats (admin only)
