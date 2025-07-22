@@ -6,7 +6,7 @@ import ChatSidebar from '../components/ChatSidebar';
 const Chat: React.FC = () => {
   const navigate = useNavigate();
   const [chatSessionId, setChatSessionId] = useState<number | null>(null);
-  const [messageCount, setMessageCount] = useState(0);
+  const [_, setMessageCount] = useState(0);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">

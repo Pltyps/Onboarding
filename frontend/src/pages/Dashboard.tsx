@@ -4,11 +4,9 @@ import { useAuth } from '../context/AuthContext';
 const Dashboard = () => {
   const { user } = useAuth();
   const role = user?.role;
-  const department = user?.department;
 
   const isAdmin = role === 'Admin';
   const isFullTime = role === 'FullTime';
-  const isStudent = role === 'Student';
 
   return (
     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
