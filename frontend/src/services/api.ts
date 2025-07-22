@@ -60,13 +60,13 @@ export const streamChat = async (
   chatSessionId: number,
   message: string
 ): Promise<ReadableStream<Uint8Array> | null> => {
-  const res = await fetch(`${API_BASE}/chat/send/${chatSessionId}`, {
+  const res = await fetch(`${API_BASE}/chat/send`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     credentials: 'include',
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, chatSessionId }),
   });
 
   if (!res.ok) {

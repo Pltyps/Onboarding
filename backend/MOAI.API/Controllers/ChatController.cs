@@ -36,6 +36,35 @@ namespace MOAI.API.Controllers
             return User.FindFirst(ClaimTypes.Email)?.Value ?? throw new UnauthorizedAccessException("Missing user email claim.");
         }
 
+        // POST /api/chat/send/{chatSessionId}
+        [HttpPost("send/{chatSessionId}")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> StreamChat(
+            int chatSessionId,
+            [FromBody] ChatRequest req,
+            CancellationToken ct = default)
+        {
+            var user = GetAppUser();
+
+            if (req.IsFirstMessage)
+            {
+                var title = req.Message.Length > 40
+                    ? req.Message.Substring(0, 40) + "..."
+                    : req.Message;
+                await _history.UpdateTitleAsync(chatSessionId, title);
+            }
+
+            Response.ContentType = "text/event-stream";
+            await foreach (var token in _chatService.StreamChatAsync(user, req.Message, chatSessionId, ct))
+            {
+                await Response.WriteAsync(token);
+                await Response.Body.FlushAsync(ct);
+            }
+
+            return new EmptyResult();
+        }
+
+
         // POST /api/chat?stream=true
         [HttpPost]
         [DisableRequestSizeLimit]
