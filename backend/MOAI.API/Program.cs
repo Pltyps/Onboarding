@@ -29,7 +29,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(opts =>
 
 // ── CORS ──
 builder.Services.AddCors(o => o.AddPolicy("AllowFrontend", p =>
-    p.WithOrigins("http://localhost:3000")
+    p.WithOrigins(
+    "http://localhost:3000",
+    "https://onboarding-hp91.onrender.com")
      .AllowAnyHeader()
      .AllowAnyMethod()
      .AllowCredentials()));
