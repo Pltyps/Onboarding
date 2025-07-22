@@ -59,19 +59,23 @@ public class DocumentService : IDocumentService
         }
 
         string pdfPath;
+        var outputDir = Path.Combine(_env.WebRootPath, "converted");
+        Directory.CreateDirectory(outputDir);
+
         if (extension == ".docx")
         {
-            pdfPath = _pdfConverter.ConvertToPdf(tempPath);
+            var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
+            pdfPath = _pdfConverter.ConvertToPdf(tempPath, targetPdfPath);
         }
         else if (extension == ".txt" || extension == ".md")
         {
             var html = $"<pre>{System.Net.WebUtility.HtmlEncode(extractedText ?? "")}</pre>";
-            pdfPath = _pdfConverter.ConvertHtmlToPdf(html, originalFileName);
+            var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
+            pdfPath = _pdfConverter.ConvertHtmlToPdf(html, targetPdfPath);
         }
+
         else if (extension == ".pdf")
         {
-            var outputDir = Path.Combine(_env.WebRootPath, "converted");
-            Directory.CreateDirectory(outputDir);
             pdfPath = Path.Combine(outputDir, originalFileName);
             System.IO.File.Copy(tempPath, pdfPath, overwrite: true);
         }

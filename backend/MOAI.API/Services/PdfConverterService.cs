@@ -11,9 +11,9 @@ namespace MOAI.API.Services
             _env = env;
         }
 
-        public string ConvertToPdf(string inputPath)
+        public string ConvertToPdf(string inputPath, string outputPath)
         {
-            var outputDir = Path.Combine(_env.WebRootPath, "converted");
+            var outputDir = Path.GetDirectoryName(outputPath)!;
             Directory.CreateDirectory(outputDir);
 
             var psi = new ProcessStartInfo
@@ -34,32 +34,29 @@ namespace MOAI.API.Services
             Console.WriteLine("LibreOffice output: " + output);
             Console.WriteLine("LibreOffice error: " + error);
 
-            var outputPdf = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(inputPath) + ".pdf");
-
-            if (!File.Exists(outputPdf))
+            // You already know what the expected PDF filename is
+            if (!File.Exists(outputPath))
             {
-                Console.WriteLine($"Resolved output directory: {outputDir}");
-                throw new Exception("PDF conversion failed: " + outputPdf);
+                throw new Exception("PDF conversion failed: " + outputPath);
             }
 
-            return outputPdf;
+            return outputPath;
         }
 
 
-        public string ConvertHtmlToPdf(string html, string fileName)
+
+        public string ConvertHtmlToPdf(string html, string outputPath)
         {
-            var outputDir = Path.Combine(_env.WebRootPath, "converted");
+            var outputDir = Path.GetDirectoryName(outputPath)!;
             Directory.CreateDirectory(outputDir);
 
-            var htmlPath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(fileName) + ".html");
-            var pdfPath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(fileName) + ".pdf");
-
+            var htmlPath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(outputPath) + ".html");
             File.WriteAllText(htmlPath, html);
 
             var psi = new ProcessStartInfo
             {
                 FileName = "wkhtmltopdf",
-                Arguments = $"\"{htmlPath}\" \"{pdfPath}\"",
+                Arguments = $"\"{htmlPath}\" \"{outputPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -71,10 +68,11 @@ namespace MOAI.API.Services
 
             File.Delete(htmlPath);
 
-            if (!File.Exists(pdfPath))
-                throw new Exception("HTML to PDF conversion failed: " + pdfPath);
+            if (!File.Exists(outputPath))
+                throw new Exception("HTML to PDF conversion failed: " + outputPath);
 
-            return pdfPath;
+            return outputPath;
         }
+
     }
 }
