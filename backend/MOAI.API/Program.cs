@@ -43,6 +43,10 @@ builder.Services
     .AddAuthentication("CookieAuth")
     .AddScheme<AuthenticationSchemeOptions, DummyAuthHandler>("CookieAuth", _ => { });
 
+// ── Azure Blob Storage──
+builder.Services.AddSingleton<AzureBlobService>();
+
+
 // ── Document + AI services ──
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 

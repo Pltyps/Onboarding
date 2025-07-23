@@ -4,6 +4,7 @@ using MOAI.API.Models;
 using MOAI.API.Services;
 using Microsoft.EntityFrameworkCore;
 using MOAI.API.Utils;
+using Azure.Storage.Blobs;
 
 public class DocumentService : IDocumentService
 {
@@ -11,6 +12,7 @@ public class DocumentService : IDocumentService
     private readonly IWebHostEnvironment _env;
     private readonly PdfConverterService _pdfConverter;
     private readonly IHttpContextAccessor _http;
+    private readonly BlobContainerClient _blobClient;
 
     public DocumentService(
         ApplicationDbContext db,
@@ -22,6 +24,10 @@ public class DocumentService : IDocumentService
         _env = env;
         _pdfConverter = pdfConverter;
         _http = http;
+
+        var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING")!;
+        var containerName = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONTAINER_NAME")!;
+        _blobClient = new BlobContainerClient(connectionString, containerName);
     }
 
     public async Task<(bool IsDuplicate, string ExistingPath)> CheckForDuplicateAsync(string fileName)
@@ -48,31 +54,25 @@ public class DocumentService : IDocumentService
         }
 
         string? extractedText = null;
-
         string pdfPath;
         var outputDir = Path.Combine(_env.WebRootPath, "converted");
         Directory.CreateDirectory(outputDir);
 
         if (extension == ".docx")
         {
-            // ✅ Extract text for chatbot context
             var rawText = WordDocReader.ReadToText(tempPath);
             extractedText = FileSanitizer.Sanitize(rawText);
 
-            // ✅ Convert original file to PDF using LibreOffice
             var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
             pdfPath = _pdfConverter.ConvertToPdf(tempPath, targetPdfPath);
         }
         else if (extension == ".txt" || extension == ".md")
         {
-            // ✅ Extract raw text and render via <pre>
             extractedText = await File.ReadAllTextAsync(tempPath);
             var html = $"<pre>{System.Net.WebUtility.HtmlEncode(extractedText ?? "")}</pre>";
             var targetPdfPath = Path.Combine(outputDir, Path.ChangeExtension(originalFileName, ".pdf"));
             pdfPath = _pdfConverter.ConvertHtmlToPdf(html, targetPdfPath);
         }
-
-
         else if (extension == ".pdf")
         {
             pdfPath = Path.Combine(outputDir, originalFileName);
@@ -84,6 +84,14 @@ public class DocumentService : IDocumentService
         }
 
         System.IO.File.Delete(tempPath);
+
+        var blobName = Path.GetFileName(pdfPath);
+        var blobClient = _blobClient.GetBlobClient(blobName);
+        await using var blobStream = File.OpenRead(pdfPath);
+        await blobClient.UploadAsync(blobStream, overwrite: true);
+        var blobUri = blobClient.Uri.ToString();
+
+        System.IO.File.Delete(pdfPath); // delete local PDF after upload
 
         var baseName = Path.GetFileNameWithoutExtension(originalFileName);
         var allDocs = await _db.Documents.ToListAsync();
@@ -97,8 +105,8 @@ public class DocumentService : IDocumentService
             existing.FileName = originalFileName;
             existing.Department = department;
             existing.UploadedAt = DateTime.UtcNow;
-            existing.PdfPath = pdfPath;
             existing.Content = extractedText ?? "";
+            existing.PdfPath = blobUri;
 
             if (string.IsNullOrWhiteSpace(existing.UploadedBy))
             {
@@ -115,7 +123,7 @@ public class DocumentService : IDocumentService
                 Department = department,
                 UploadedBy = uploadedBy,
                 UploadedAt = DateTime.UtcNow,
-                PdfPath = pdfPath,
+                PdfPath = blobUri,
                 Content = extractedText ?? ""
             };
 
@@ -148,21 +156,20 @@ public class DocumentService : IDocumentService
                 return false;
 
             var doc = await _db.Documents.FirstOrDefaultAsync(d => d.FileName == fileName);
-            if (doc == null)
-                return false;
+            if (doc == null) return false;
 
             var user = _http.HttpContext?.User;
             var userRole = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
-
-            var isAdmin = userRole == "Admin";
-
             var userEmail = user?.FindFirst(ClaimTypes.Email)?.Value ?? "";
-            var isUploadEmp = userRole == "FullTime" && userEmail == doc.UploadedBy;
+            var isAdmin = userRole == "Admin";
+            var isUploader = userRole == "FullTime" && userEmail == doc.UploadedBy;
 
-            Console.WriteLine($"[Delete] Role: {userRole}, Allowed: {isAdmin || isUploadEmp}");
+            if (!isAdmin && !isUploader) return false;
 
-            if (!isAdmin && !isUploadEmp)
-                return false;
+            // 🧹 Optional: delete from Azure Blob Storage
+            var blobName = Path.GetFileName(doc.PdfPath);
+            var blob = _blobClient.GetBlobClient(blobName);
+            await blob.DeleteIfExistsAsync();
 
             _db.Documents.Remove(doc);
             await _db.SaveChangesAsync();

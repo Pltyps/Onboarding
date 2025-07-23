@@ -104,6 +104,13 @@ namespace MOAI.API.Services
             return null;
         }
 
+        private bool IsVagueFollowUp(string msg)
+        {
+            var trimmed = msg.Trim().ToLowerInvariant();
+            return new[] {
+                "how", "how?", "explain", "can you clarify", "what do you mean", "more info", "can you explain"
+            }.Contains(trimmed);
+        }
 
         // --------------------------------------------------------------------------------
         // 📊 DATA EXTRACTION HELPERS
@@ -217,6 +224,7 @@ namespace MOAI.API.Services
             Your job is to:
             - Analyze the user's question carefully.
             - Search for answers using ONLY documents that match the user's department.
+            - If the document includes numbered steps, checklists, instructions, or explicit how-to directions, reproduce them exactly as-is. Do not paraphrase or generalize.
             - Quote directly from the document content, citing document names and relevant sections.
             - Do NOT make up any information or speculate beyond provided content.
             - Ensure your answers comply with university policies before responding.
@@ -323,6 +331,15 @@ namespace MOAI.API.Services
                 historyBlock.AppendLine($"{msg.Role.ToUpperInvariant()}: {msg.Message}");
             }
 
+            var lastBotMessage = priorMessages
+                .Where(m => m.Role == "assistant")
+                .LastOrDefault()?.Message ?? "";
+
+            if (IsVagueFollowUp(message) && !string.IsNullOrWhiteSpace(lastBotMessage))
+            {
+                context += $"\n\n🧠 Previous Answer (for clarification):\n{lastBotMessage}";
+            }
+
             var policyLink = MatchPolicyLink(message);
             var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), policyLink);
 
@@ -350,6 +367,16 @@ namespace MOAI.API.Services
             foreach (var msg in priorMessages.TakeLast(3))
             {
                 historyBlock.AppendLine($"{msg.Role.ToUpperInvariant()}: {msg.Message}");
+            }
+
+            var lastBotMessage = priorMessages
+                .Where(m => m.Role == "assistant")
+                .LastOrDefault()?.Message ?? "";
+
+
+            if (IsVagueFollowUp(message) && !string.IsNullOrWhiteSpace(lastBotMessage))
+            {
+                context += $"\n\n🧠 Previous Answer (for clarification):\n{lastBotMessage}";
             }
 
             var policyLink = MatchPolicyLink(message);

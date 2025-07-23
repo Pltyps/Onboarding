@@ -67,7 +67,13 @@ const Chatbot: React.FC<ChatbotProps> = ({
     const loadMessages = async () => {
       try {
         const loaded = await getMessages(chatSessionId);
-        setMessages(loaded);
+        setMessages(
+          loaded.map((msg) =>
+            msg.sender === 'bot'
+              ? { ...msg, text: msg.text } // linkify applied during render
+              : msg
+          )
+        );
       } catch (err) {
         console.error('Failed to load messages:', err);
       }
