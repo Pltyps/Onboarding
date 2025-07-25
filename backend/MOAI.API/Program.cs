@@ -5,6 +5,8 @@ using MOAI.API.Data;
 using MOAI.API.Models;
 using MOAI.API.Services;
 using DotNetEnv;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
+
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -23,9 +25,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ── SQLite DB ──
-builder.Services.AddDbContext<ApplicationDbContext>(opts =>
-    opts.UseSqlite(builder.Configuration.GetConnectionString("StorageConnection")));
+// ── SQLite (Local) or Neon DB (Online) ──
+if (builder.Environment.IsDevelopment())
+{
+    // ✅ Use local SQLite for development
+    builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+        opts.UseSqlite(builder.Configuration.GetConnectionString("StorageConnection")));
+}
+else
+{
+    // ✅ Use Neon PostgreSQL for production
+    var host = "ep-shy-art-af4560fp-pooler.c-2.us-west-2.aws.neon.tech";
+    var dbName   = "neondb";
+    var username = "neondb_owner";
+    var password = Environment.GetEnvironmentVariable("NEON_DB_PASSWORD");
+
+    var connectionString = $"Host={host};Database={dbName};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true";
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
 
 // ── CORS ──
 builder.Services.AddCors(o => o.AddPolicy("AllowFrontend", p =>
