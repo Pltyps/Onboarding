@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import Linkify from 'linkify-react';
+import { getDocumentByName } from '../services/api';
 
 interface DocumentInfo {
   fileName: string;
@@ -25,10 +26,8 @@ const DocumentView: React.FC = () => {
   useEffect(() => {
     const fetchDocument = async () => {
       try {
-        const res = await axios.get<DocumentInfo>(
-          `/api/document/${encodeURIComponent(fileName!)}`
-        );
-        setDoc(res.data);
+        const res = await getDocumentByName(fileName!);
+        setDoc(res);
       } catch (err) {
         console.error('Failed to load document metadata:', err);
         setDoc(null);
@@ -53,8 +52,14 @@ const DocumentView: React.FC = () => {
 
   if (!doc) {
     return (
-      <div className="container mt-4 text-danger">
-        Document not found or failed to load.
+      <div className="container mt-4">
+        <button
+          className="btn btn-outline-secondary mb-3"
+          onClick={() => navigate('/documents')}
+        >
+          ← Back to Document Library
+        </button>
+        <div className="text-danger">Document not found or failed to load.</div>
       </div>
     );
   }

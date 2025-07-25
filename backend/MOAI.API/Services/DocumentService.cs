@@ -32,12 +32,17 @@ public class DocumentService : IDocumentService
 
     public async Task<(bool IsDuplicate, string ExistingPath)> CheckForDuplicateAsync(string fileName)
     {
-        var baseName = Path.GetFileNameWithoutExtension(fileName);
+        var baseName = Path.GetFileNameWithoutExtension(fileName)
+            .Trim()
+            .ToLowerInvariant();
         var allDocs = await _db.Documents.AsNoTracking().ToListAsync();
 
         var existing = allDocs
             .OrderByDescending(d => d.UploadedAt)
-            .FirstOrDefault(d => Path.GetFileNameWithoutExtension(d.FileName) == baseName);
+            .FirstOrDefault(d =>
+                Path.GetFileNameWithoutExtension(d.FileName)
+                    .Trim()
+                    .ToLowerInvariant() == baseName);
 
         return (existing != null, existing?.PdfPath ?? string.Empty);
     }
@@ -93,11 +98,18 @@ public class DocumentService : IDocumentService
 
         System.IO.File.Delete(pdfPath); // delete local PDF after upload
 
-        var baseName = Path.GetFileNameWithoutExtension(originalFileName);
+        var baseName = Path.GetFileNameWithoutExtension(originalFileName)
+            .Trim()
+            .ToLowerInvariant();
+
         var allDocs = await _db.Documents.ToListAsync();
         var existing = allDocs
             .OrderByDescending(d => d.UploadedAt)
-            .FirstOrDefault(d => Path.GetFileNameWithoutExtension(d.FileName) == baseName);
+            .FirstOrDefault(d =>
+                Path.GetFileNameWithoutExtension(d.FileName)
+                    .Trim()
+                    .ToLowerInvariant() == baseName);
+
 
         StoredDocument doc;
         if (existing != null)
@@ -140,13 +152,21 @@ public class DocumentService : IDocumentService
 
     public async Task<StoredDocument?> GetByFileNameAsync(string fileName)
     {
-        var baseName = Path.GetFileNameWithoutExtension(fileName);
-        var allDocs = await _db.Documents.ToListAsync();
+        var normalizedBase = Path.GetFileNameWithoutExtension(Uri.UnescapeDataString(fileName))
+            .Trim()
+            .ToLowerInvariant();
 
-        return allDocs
+        return await _db.Documents
+            .AsNoTracking()
             .OrderByDescending(d => d.UploadedAt)
-            .FirstOrDefault(d => Path.GetFileNameWithoutExtension(d.FileName) == baseName);
+            .FirstOrDefaultAsync(d =>
+                Path.GetFileNameWithoutExtension(d.FileName)
+                    .Trim()
+                    .ToLowerInvariant() == normalizedBase);
     }
+
+
+
 
     public async Task<bool> DeleteFileAsync(string fileName)
     {
