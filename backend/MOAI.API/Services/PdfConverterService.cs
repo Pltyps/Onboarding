@@ -22,7 +22,7 @@ namespace MOAI.API.Services
 
             var psi = new ProcessStartInfo
             {
-                FileName = "soffice",
+                FileName = "libreoffice",  // 🔁 <-- this is the key fix
                 Arguments = $"--headless --convert-to pdf \"{inputPath}\" --outdir \"{outputDir}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -38,7 +38,6 @@ namespace MOAI.API.Services
             Console.WriteLine("LibreOffice output: " + output);
             Console.WriteLine("LibreOffice error: " + error);
 
-            // You already know what the expected PDF filename is
             if (!File.Exists(outputPath))
             {
                 throw new Exception("PDF conversion failed: " + outputPath);
@@ -46,6 +45,7 @@ namespace MOAI.API.Services
 
             return outputPath;
         }
+
 
 
 
