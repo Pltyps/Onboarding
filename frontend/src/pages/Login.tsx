@@ -29,13 +29,12 @@ const Login: React.FC = () => {
         JSON.stringify({ email: userEmail, role, department })
       );
 
-      // ✅ Set auth cookies for backend auth
+      // ✅ Set cookies so the backend can authorize iframe and API requests
       document.cookie = `user_email=${userEmail}; path=/; SameSite=None; Secure`;
       document.cookie = `user_role=${role}; path=/; SameSite=None; Secure`;
       document.cookie = `user_department=${department}; path=/; SameSite=None; Secure`;
 
-      login(userEmail, role as UserRole, department); // if your useAuth expects department too
-
+      login(userEmail, role as UserRole, department);
       navigate('/dashboard');
     } catch (err) {
       setError('Invalid credentials.');
