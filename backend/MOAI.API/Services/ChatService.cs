@@ -345,11 +345,27 @@ namespace MOAI.API.Services
 
             reply = await _openAi.GetChatCompletionAsync(prompt, ct);
 
+            if (IsGeneralOnboardingQuery(message))
+            {
+                var intro = "Welcome to your role as a business manager in the Information Systems department! As you get started, here’s a high-level overview of your responsibilities and steps to take:\n\n";
+                reply = intro + reply;
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(policyLink) &&
+                !reply.Contains(policyLink, StringComparison.OrdinalIgnoreCase))
+            {
+                reply += $"\n\nFor the relevant university policy, refer to: {policyLink}";
+            }
+
             if (string.IsNullOrWhiteSpace(reply))
+            {
                 reply = "I'm sorry, I wasn't able to find any helpful information for that. Please check with your department supervisor.";
+            }
 
             var botMsg = await _history.AddMessageAsync(chatSessionId, "assistant", reply);
             return JsonSerializer.Serialize(new { reply = reply, messageId = botMsg.Id });
+
         }
 
         // --------------------------------------------------------------------------------
@@ -358,10 +374,28 @@ namespace MOAI.API.Services
 
         public async IAsyncEnumerable<string> StreamChatAsync(AppUser user, string message, int chatSessionId, [EnumeratorCancellation] CancellationToken ct)
         {
-            var docs = await _db.Documents.Where(d => d.Department == user.Department && d.IsActive).ToListAsync(ct);
-            var keywords = ExtractKeywords(message);
-            var context = ExtractRelevantText(docs, keywords);
+            // 1. Save user message
+            await _history.AddMessageAsync(chatSessionId, "user", message);
 
+            // 2. Gather document context
+            var docs = await _db.Documents
+                .Where(d => d.Department == user.Department && d.IsActive)
+                .ToListAsync(ct);
+
+            string context;
+            if (IsGeneralOnboardingQuery(message))
+            {
+                context = SummarizeOnboardingInfo(docs);
+            }
+            else
+            {
+                var keywords = ExtractKeywords(message);
+                context = ExtractRelevantText(docs, keywords);
+                if (string.IsNullOrWhiteSpace(context))
+                    context = SummarizeAllDocuments(docs);
+            }
+
+            // 3. Build chat history
             var priorMessages = await _history.GetMessagesAsync(chatSessionId);
             var historyBlock = new StringBuilder();
             foreach (var msg in priorMessages.TakeLast(3))
@@ -369,25 +403,57 @@ namespace MOAI.API.Services
                 historyBlock.AppendLine($"{msg.Role.ToUpperInvariant()}: {msg.Message}");
             }
 
+            // 4. Handle vague follow-ups
             var lastBotMessage = priorMessages
                 .Where(m => m.Role == "assistant")
                 .LastOrDefault()?.Message ?? "";
-
 
             if (IsVagueFollowUp(message) && !string.IsNullOrWhiteSpace(lastBotMessage))
             {
                 context += $"\n\n🧠 Previous Answer (for clarification):\n{lastBotMessage}";
             }
 
+            // 5. Build prompt
             var policyLink = MatchPolicyLink(message);
             var prompt = BuildPrompt(message, user.Department, context, historyBlock.ToString(), policyLink);
 
+            // 6. Call OpenAI
             var reply = await _openAi.GetChatCompletionAsync(prompt, ct);
 
-            await _history.AddMessageAsync(chatSessionId, "user", message);
+            if (IsGeneralOnboardingQuery(message))
+            {
+                var intro = "Welcome to your role as a business manager in the Information Systems department! As you get started, here’s a high-level overview of your responsibilities and steps to take:\n\n";
+                reply = intro + reply;
+            }
+
+
+            // 7. Fallback if model returned nothing
+            if (string.IsNullOrWhiteSpace(reply))
+            {
+                reply = "I'm sorry, I wasn't able to find any helpful information for that. Please check with your department supervisor.";
+            }
+            else if (!string.IsNullOrWhiteSpace(policyLink) &&
+                    !reply.Contains(policyLink, StringComparison.OrdinalIgnoreCase))
+            {
+                reply += $"\n\nFor the relevant university policy, refer to: {policyLink}";
+            }
+
+            // 8. Save assistant response
             await _history.AddMessageAsync(chatSessionId, "assistant", reply);
 
-            yield return reply;
+            // 9. Return stream token-by-token
+            foreach (var chunk in SplitIntoChunks(reply, 300))
+            {
+                yield return chunk;
+                await Task.Delay(5, ct); // Optional: simulate typing
+            }
+        }
+
+        // Helper to split reply into ~300-char chunks for stream output
+        private IEnumerable<string> SplitIntoChunks(string text, int maxLength)
+        {
+            for (int i = 0; i < text.Length; i += maxLength)
+                yield return text.Substring(i, Math.Min(maxLength, text.Length - i));
         }
     }
 }
