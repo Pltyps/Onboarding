@@ -77,22 +77,22 @@ const DocumentView: React.FC = () => {
       {isValidPdfUrl ? (
         <>
           <iframe
-            src={doc.pdfPath}
-            title="Document Viewer"
+            src={`/api/document/view/${encodeURIComponent(doc.fileName)}`}
             width="100%"
             height="600px"
+            title="Document Viewer"
             style={{ border: '1px solid #ccc' }}
+            loading="lazy"
           />
-          <div className="mt-2">
-            <a
-              href={doc.pdfPath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-sm btn-outline-primary"
-            >
-              Open PDF in new tab
-            </a>
-          </div>
+
+          <a
+            href={`/api/document/view/${encodeURIComponent(doc.fileName)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-outline-primary"
+          >
+            Open PDF in new tab
+          </a>
         </>
       ) : doc.content ? (
         <div className="mb-3">

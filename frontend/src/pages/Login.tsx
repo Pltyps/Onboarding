@@ -23,18 +23,23 @@ const Login: React.FC = () => {
         department,
       } = await loginUser(email, password);
 
-      // ✅ Optionally store other user info
+      // ✅ Store in localStorage
       localStorage.setItem(
         'user',
         JSON.stringify({ email: userEmail, role, department })
       );
+
+      // ✅ Set auth cookies for backend auth
+      document.cookie = `user_email=${userEmail}; path=/; SameSite=None; Secure`;
+      document.cookie = `user_role=${role}; path=/; SameSite=None; Secure`;
+      document.cookie = `user_department=${department}; path=/; SameSite=None; Secure`;
 
       login(userEmail, role as UserRole, department); // if your useAuth expects department too
 
       navigate('/dashboard');
     } catch (err) {
       setError('Invalid credentials.');
-      setPassword(''); // Optional: Clear password on error
+      setPassword('');
     }
   };
 

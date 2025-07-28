@@ -91,14 +91,24 @@ public class DocumentController : ControllerBase
     // Get raw content (stream) by file name for iframe display Endpoint
     [Authorize]
     [HttpGet("view/{fileName}")]
-    public async Task<IActionResult> View(string fileName)
+    public async Task<IActionResult> View(
+        string fileName,
+        [FromServices] IDocumentService docService,
+        [FromServices] AzureBlobService blobService)
     {
-        var doc = await _docService.GetByFileNameAsync(fileName);
-        if (doc == null || !System.IO.File.Exists(doc.PdfPath))
-            return NotFound("Document or file missing.");
+        var doc = await docService.GetByFileNameAsync(fileName);
+        if (doc == null || string.IsNullOrWhiteSpace(doc.PdfPath))
+            return NotFound("Document not found");
 
-        return PhysicalFile(doc.PdfPath, "application/pdf", enableRangeProcessing: true);
+        var blobName = Path.GetFileName(doc.PdfPath); // just the filename
+        var stream = await blobService.DownloadFileAsync(blobName);
+        if (stream == null)
+            return NotFound("File not found in blob storage.");
+
+        return File(stream, "application/pdf", enableRangeProcessing: true);
     }
+
+
 
 
     // Delete Endpoint
