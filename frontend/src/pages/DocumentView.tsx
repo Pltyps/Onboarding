@@ -15,6 +15,8 @@ const DocumentView: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [doc, setDoc] = useState<DocumentInfo | null>(null);
+  const apiBase =
+    import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,7 +79,7 @@ const DocumentView: React.FC = () => {
       {isValidPdfUrl ? (
         <>
           <iframe
-            src={`/api/document/view/${encodeURIComponent(doc.fileName)}`}
+            src={`${apiBase}/document/view/${encodeURIComponent(doc.fileName)}`}
             width="100%"
             height="600px"
             title="Document Viewer"
@@ -86,7 +88,7 @@ const DocumentView: React.FC = () => {
           />
 
           <a
-            href={`/api/document/view/${encodeURIComponent(doc.fileName)}`}
+            href={`${apiBase}/document/view/${encodeURIComponent(doc.fileName)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-sm btn-outline-primary"

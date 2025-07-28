@@ -4,7 +4,8 @@ import type { LoginResponse, ChatMessage } from '../shared/types';
 import type { SystemStats } from '../types';
 
 // 📦 Base API client with cookied-based auth support
-export const API_BASE = 'https://moai-backend-gbgv.onrender.com/api';
+export const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
