@@ -9,11 +9,19 @@ public class AzureBlobService
 
     public AzureBlobService(IConfiguration config)
     {
-        var connectionString = config["AzureStorage:ConnectionString"];
-        var containerName = config["AzureStorage:ContainerName"];
+        var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+        var containerName = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONTAINER_NAME");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Missing AZURE_STORAGE_CONNECTION_STRING");
+
+        if (string.IsNullOrWhiteSpace(containerName))
+            throw new ArgumentException("Missing AZURE_STORAGE_CONTAINER_NAME");
+
         _container = new BlobContainerClient(connectionString, containerName);
         _container.CreateIfNotExists(PublicAccessType.None);
     }
+
 
     public async Task<string> UploadFileAsync(string blobName, Stream stream, string contentType)
     {
