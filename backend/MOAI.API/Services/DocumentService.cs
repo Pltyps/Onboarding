@@ -90,7 +90,11 @@ public class DocumentService : IDocumentService
 
         System.IO.File.Delete(tempPath);
 
-        var blobName = Path.GetFileName(pdfPath);
+        // normalized blob name (Azure is very sensitive about names):
+        var blobName = Path.GetFileNameWithoutExtension(originalFileName)
+            .Trim()
+            .ToLowerInvariant()
+            .Replace(" ", "_") + ".pdf";
         var blobClient = _blobClient.GetBlobClient(blobName);
         await using var blobStream = File.OpenRead(pdfPath);
         await blobClient.UploadAsync(blobStream, overwrite: true);
@@ -166,10 +170,6 @@ public class DocumentService : IDocumentService
 
         return Task.FromResult(result);
     }
-
-
-
-
 
 
     public async Task<bool> DeleteFileAsync(string fileName)

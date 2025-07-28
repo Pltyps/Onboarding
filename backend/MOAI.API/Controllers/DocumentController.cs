@@ -100,7 +100,7 @@ public class DocumentController : ControllerBase
         if (doc == null || string.IsNullOrWhiteSpace(doc.PdfPath))
             return NotFound("Document not found");
 
-        var blobName = Path.GetFileName(doc.PdfPath); // just the filename
+        var blobName = Path.GetFileName(Uri.UnescapeDataString(doc.PdfPath));
         var stream = await blobService.DownloadFileAsync(blobName);
         if (stream == null)
             return NotFound("File not found in blob storage.");
