@@ -96,17 +96,39 @@ public class DocumentController : ControllerBase
         [FromServices] IDocumentService docService,
         [FromServices] AzureBlobService blobService)
     {
-        var doc = await docService.GetByFileNameAsync(fileName);
-        if (doc == null || string.IsNullOrWhiteSpace(doc.PdfPath))
-            return NotFound("Document not found");
+        try
+        {
+            Console.WriteLine($"📄 [View] Requested: {fileName}");
 
-        var blobName = Path.GetFileName(Uri.UnescapeDataString(doc.PdfPath));
-        var stream = await blobService.DownloadFileAsync(blobName);
-        if (stream == null)
-            return NotFound("File not found in blob storage.");
+            var doc = await docService.GetByFileNameAsync(fileName);
+            if (doc == null || string.IsNullOrWhiteSpace(doc.PdfPath))
+            {
+                Console.WriteLine($"❌ [View] Document not found in DB: {fileName}");
+                return NotFound("Document not found");
+            }
 
-        return File(stream, "application/pdf", enableRangeProcessing: true);
+            Console.WriteLine($"✅ [View] Found in DB. PdfPath: {doc.PdfPath}");
+
+            var blobName = Path.GetFileName(Uri.UnescapeDataString(doc.PdfPath));
+            Console.WriteLine($"📦 [View] Decoded blob name: {blobName}");
+
+            var stream = await blobService.DownloadFileAsync(blobName);
+            if (stream == null)
+            {
+                Console.WriteLine($"❌ [View] Blob not found in Azure: {blobName}");
+                return NotFound("File not found in blob storage.");
+            }
+
+            Console.WriteLine("✅ [View] Returning PDF stream.");
+            return File(stream, "application/pdf", enableRangeProcessing: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 [View] EXCEPTION: {ex.Message}");
+            return StatusCode(500, new { error = "Unexpected server error." });
+        }
     }
+
 
 
 
