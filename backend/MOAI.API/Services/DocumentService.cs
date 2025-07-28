@@ -150,20 +150,24 @@ public class DocumentService : IDocumentService
         return await _db.Documents.OrderBy(d => d.FileName).ToListAsync();
     }
 
-    public async Task<StoredDocument?> GetByFileNameAsync(string fileName)
+    public Task<StoredDocument?> GetByFileNameAsync(string fileName)
     {
         var normalizedBase = Path.GetFileNameWithoutExtension(Uri.UnescapeDataString(fileName))
             .Trim()
             .ToLowerInvariant();
 
-        return await _db.Documents
-            .AsNoTracking()
+        var result = _db.Documents
+            .AsEnumerable()
             .OrderByDescending(d => d.UploadedAt)
-            .FirstOrDefaultAsync(d =>
+            .FirstOrDefault(d =>
                 Path.GetFileNameWithoutExtension(d.FileName)
                     .Trim()
                     .ToLowerInvariant() == normalizedBase);
+
+        return Task.FromResult(result);
     }
+
+
 
 
 
