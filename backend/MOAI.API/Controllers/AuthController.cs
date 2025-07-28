@@ -27,29 +27,23 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid credentials");
 
         // Set cookie manually
-        HttpContext.Response.Cookies.Append("user_email", user.Email, new CookieOptions
+        Response.Cookies.Append("user_email", user.Email, new CookieOptions
         {
-            HttpOnly = true,
-            Secure = true,
+            HttpOnly = false,
             SameSite = SameSiteMode.None,
-            Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddHours(1)
+            Secure = true,
         });
-        HttpContext.Response.Cookies.Append("user_role", user.Role, new CookieOptions
+        Response.Cookies.Append("user_role", user.Role, new CookieOptions
         {
-            HttpOnly = true,
-            Secure = true,
+            HttpOnly = false,
             SameSite = SameSiteMode.None,
-            Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddHours(1)
+            Secure = true,
         });
-        HttpContext.Response.Cookies.Append("user_department", user.Department, new CookieOptions
+        Response.Cookies.Append("user_department", user.Department, new CookieOptions
         {
-            HttpOnly = true,
-            Secure = true,
+            HttpOnly = false,
             SameSite = SameSiteMode.None,
-            Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddHours(1)
+            Secure = true,
         });
 
         return Ok(new

@@ -155,37 +155,6 @@ else
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"error\":\"Unexpected server error.\"}");
-    });
-});
-
-
-app.Use(async (ctx, next) =>
-{
-    var email = ctx.Request.Cookies["user_email"];
-    var role = ctx.Request.Cookies["user_role"];
-    var dept = ctx.Request.Cookies["user_department"];
-
-    if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(role))
-    {
-        ActiveUserTracker.Track(email);
-        ctx.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, role),
-            new Claim("Department", dept ?? "")
-        }, "CookieAuth"));
-    }
-
-    await next();
-});
-
 app.MapGet("/health", () => Results.Ok("Healthy"));
 
 app.UseAuthentication();
